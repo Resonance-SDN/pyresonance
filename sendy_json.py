@@ -21,7 +21,7 @@ from optparse import OptionParser
 CTRL_ADDR = '127.0.0.1'
 CONN_PORT = 50001
 
-eventTypes = {'auth': 0, 'ids': 1}
+eventTypes = {'auth': 0, 'ids': 1, 'lb': 2}
 
 def main():
 
@@ -34,8 +34,8 @@ def main():
 
     op.add_option( '--event-type', '-e', type='choice',
                    dest="eventType",
-                     choices=['auth','ids'], 
-                     help = '|'.join( ['auth','ids'] )  )
+                     choices=['auth','ids', 'lb'], 
+                     help = '|'.join( ['auth','ids','lb'] )  )
 
     op.add_option( '--event-value', '-V', action="store", 
                      dest="eventValue", help = 'the host IP for which a state change happens'  )
