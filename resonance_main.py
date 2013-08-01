@@ -1,4 +1,3 @@
-
 ################################################################################
 # The Pyretic Project                                                          #
 # frenetic-lang.org/pyretic                                                    #
@@ -44,16 +43,19 @@ from resonance_states import *
 from resonance_handlers import EventListener
 from multiprocessing import Process, Queue
 import threading
+import os
 
 DEBUG = True
 
 """ Dynamic resonance policy """
-def resonance(self):
+def resonance(self, mod):
+  self.mod = mod
 
   # updating policy
   def update_policy(pkt=None):
-    # sequential composition of auth policy, then IDS policy
-    self.policy = (self.authPolicy.default_policy() >> self.idsPolicy.default_policy())
+    self.composedPolicy = self.mod.getUpdatedPolicy(self.userPolicies)
+    self.policy = self.composedPolicy
+    print self.policy
   self.update_policy = update_policy
 
   # Listen for state transitions.
@@ -71,31 +73,30 @@ def resonance(self):
     # Create queue for receiving state transition notification
     queue = Queue()
 
-    # Spawn an EventListener, which listens for events and keeps track of 
-    # the state of each host.
+    # Get user-defined FSMs, make them, make eventListeners
+    self.userFSMs, self.userPolicies, self.composedPolicy = self.mod.setupStateMachinesAndPolicies()
+    for idx,fsm in enumerate(self.userFSMs):
+      if idx==0:
+        self.eventListener = EventListener(fsm)
+      else:
+        self.eventListener.add_fsm(fsm)
 
-    self.authFSM = AuthStateMachine()
-    self.eventListener = EventListener(self.authFSM)
-
-    self.IDSFSM = IDSStateMachine()
-    self.eventListener.add_fsm(self.IDSFSM)
-
+    # Start eventListener with queue
     self.eventListener.start(queue)
 
-    # initialize policies
-    self.authPolicy = AuthPolicy(self.authFSM)
-    self.idsPolicy = IDSPolicy(self.IDSFSM)
-
+    # Start signal catcher thread
     t = threading.Thread(target=transition_signal_catcher, args=(queue,))
     t.daemon = True
     t.start()
 
-    # Set a default policy
+    # Set the policy
     self.update_policy()
 
   initialize()
 
 
 """ Main Method """
-def main():
-  return dynamic(resonance)() >> dynamic(learn)()
+def main(fname):
+  from importlib import import_module
+  mod = import_module(fname)
+  return dynamic(resonance)(mod) >> dynamic(learn)()
