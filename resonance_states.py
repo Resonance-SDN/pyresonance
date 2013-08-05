@@ -83,12 +83,12 @@ class ResonanceStateMachine():
             if state != previous_state:
                 print 'Given previous state is incorrect! Do nothing.'
                 return
-        else: 
-            print "state_transition ->", str(host), next_state
-            queue.put('transition')
-            self.flow_state_map[str(host)] = next_state
-            if DEBUG == True:
-                print "CURRENT STATES: ", self.flow_state_map
+
+        print "state_transition ->", str(host), next_state
+        queue.put('transition')
+        self.flow_state_map[str(host)] = next_state
+        if DEBUG == True:
+            print "CURRENT STATES: ", self.flow_state_map
 
 
         
