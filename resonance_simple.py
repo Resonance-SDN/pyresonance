@@ -61,7 +61,8 @@ def resonance(self):
   def transition_signal_catcher(queue):
     while 1:
       try:  
-        line = queue.get_nowait() # or q.get(timeout=.1)
+        line = queue.get(timeout=.1)
+#        line = queue.get_nowait() # or q.get(timeout=.1)
       except:
         continue
       else: # Got line. 
