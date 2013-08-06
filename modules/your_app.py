@@ -61,12 +61,14 @@ class YourStateMachine(ResonanceStateMachine):
 ################################################################################
 def setupStateMachineAndPolicy():
 
-  """ # PUT YOUR STATE MACHINE HERE # """
   # Create finite state machine object
+  """ # PUT YOUR STATE MACHINE HERE # """
+  """ fsm = [YOUR STATE MACHINE CLASS] """
   fsm = YourStateMachine()
 
-  """ # PUT YOUR POLICY HERE # """
   # Build policy object from state machine.
+  """ # PUT YOUR POLICY HERE # """
+  """ policy_boject = [YOUR POLICY CLASS] """
   policy_object = YourPolicy(fsm)
 
 
