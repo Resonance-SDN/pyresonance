@@ -68,7 +68,7 @@ def setupStateMachineAndPolicy():
 
   # Build policy object from state machine.
   """ # PUT YOUR POLICY HERE # """
-  """ policy_boject = [YOUR POLICY CLASS] """
+  """ policy_object = [YOUR POLICY CLASS] """
   policy_object = YourPolicy(fsm)
 
 
