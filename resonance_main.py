@@ -42,27 +42,40 @@ from resonance_policy import *
 from resonance_states import *
 from resonance_handlers import EventListener
 from multiprocessing import Process, Queue
+from importlib import import_module
 import threading
 import os
+import sys
+import re
 
 DEBUG = True
 
 """ Dynamic resonance policy """
-def resonance(self, mod):
-  self.mod = mod
+def resonance(self, mod_list):
+  self.mod_list = mod_list
+
+  # Composing policy
+  def compose_policy():
+    policy = drop
+
+    for po in self.user_policy_object_list:
+      policy = po.policy()
+
+    return policy
 
   # updating policy
   def update_policy(pkt=None):
-    self.composedPolicy = self.mod.getUpdatedPolicy(self.userPolicies)
-    self.policy = self.composedPolicy
+    self.policy = compose_policy()
     print self.policy
+
   self.update_policy = update_policy
 
   # Listen for state transitions.
   def transition_signal_catcher(queue):
     while 1:
       try:  
-        line = queue.get_nowait() # or q.get(timeout=.1)
+        line = queue.get(timeout=.1)
+#        line = queue.get_nowait() # or q.get(timeout=.1)
       except:
         continue
       else: # Got line. 
@@ -70,16 +83,24 @@ def resonance(self, mod):
 
   def initialize():
 
+    self.user_fsm_list = []
+    self.user_policy_object_list = []
+    self.user_policy_list =  []
+
     # Create queue for receiving state transition notification
     queue = Queue()
 
     # Get user-defined FSMs, make them, make eventListeners
-    self.userFSMs, self.userPolicies, self.composedPolicy = self.mod.setupStateMachinesAndPolicies()
-    for idx,fsm in enumerate(self.userFSMs):
+    for idx,mod in enumerate(self.mod_list):
+      user_fsm, user_policy_object, user_policy = mod.setupStateMachineAndPolicy()
+      self.user_fsm_list.append(user_fsm)
+      self.user_policy_object_list.append(user_policy_object)
+      self.user_policy_list.append(user_policy)
+
       if idx==0:
-        self.eventListener = EventListener(fsm)
+        self.eventListener = EventListener(user_fsm)
       else:
-        self.eventListener.add_fsm(fsm)
+        self.eventListener.add_fsm(user_fsm)
 
     # Start eventListener with queue
     self.eventListener.start(queue)
@@ -95,8 +116,49 @@ def resonance(self, mod):
   initialize()
 
 
+def parse_config_file(content):
+  mod_list = []
+  shortname_mod_list = []
+
+  # Get module list and import.
+  match = re.search('MODULES = \{(.*)\}\n+COMPOSITION = \{',content, flags=re.DOTALL)
+  if match:
+    modules_list = match.group(1).split(',')
+    for m in modules_list:
+      corrected_m = m.strip('\n').strip()
+      if corrected_m != '' and corrected_m.startswith('#') is False:
+        try: 
+          mod = import_module(corrected_m)
+        except Exception as ex:
+          print 'Import Exception: ', ex
+          sys.exit(1)
+        mod_list.append(mod)
+        split_list = corrected_m.split('.')
+        shortname_mod_list.append(split_list[-1])
+
+  # Get Composition.
+  match = re.search('COMPOSITION = \{(.*)\}',content, flags=re.DOTALL)
+  if match:
+    composition_str = match.group(1).strip('\n').strip()
+    print composition_str
+
+  return mod_list
+
 """ Main Method """
-def main(fname):
-  from importlib import import_module
-  mod = import_module(fname)
-  return dynamic(resonance)(mod) >> dynamic(learn)()
+def main(config):
+  # Read configuration file and apply.
+  try: 
+    fd = open(config, 'r')
+  except IOError as ex:
+    print 'IO Exception: ', ex
+    sys.exit(1)
+
+  content = fd.read()
+  fd.close()
+  mod_list = parse_config_file(content)
+
+  if len(mod_list) == 0:
+    print 'Config file seems incorrect. Exiting.'
+    sys.exit(1)
+
+  return dynamic(resonance)(mod_list) >> dynamic(learn)()
