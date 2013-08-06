@@ -51,19 +51,25 @@ import re
 DEBUG = True
 
 """ Dynamic resonance policy """
-def resonance(self, mod_list):
-  self.mod_list = mod_list
+def resonance(self, name_mod_map, composition_str):
 
   # Composing policy
   def compose_policy():
     policy = drop
+    policy_str = self.composition_str
+    
+    # Get composition string, replace with relevant ones.
+    for name in self.name_po_map:
+      idx = policy_str.find(name)
+      if idx != -1:
+        if self.name_po_map[name] in self.user_policy_object_list:
+          p_index = self.user_policy_object_list.index(self.name_po_map[name])
+          replace_str = 'self.user_policy_object_list[' + str(p_index) + '].policy()'
+          policy_str = policy_str.replace(name, replace_str)
+ 
+    return eval(policy_str)
 
-    for po in self.user_policy_object_list:
-      policy = po.policy()
-
-    return policy
-
-  # updating policy
+  # Updating policy
   def update_policy(pkt=None):
     self.policy = compose_policy()
     print self.policy
@@ -82,20 +88,21 @@ def resonance(self, mod_list):
         self.update_policy()
 
   def initialize():
-
+    self.composition_str = composition_str
+    self.name_mod_map = name_mod_map
+    self.name_po_map = {}
     self.user_fsm_list = []
     self.user_policy_object_list = []
-    self.user_policy_list =  []
 
     # Create queue for receiving state transition notification
     queue = Queue()
 
     # Get user-defined FSMs, make them, make eventListeners
-    for idx,mod in enumerate(self.mod_list):
-      user_fsm, user_policy_object, user_policy = mod.setupStateMachineAndPolicy()
+    for idx,name in enumerate(self.name_mod_map):
+      user_fsm, user_policy_object = self.name_mod_map[name].setupStateMachineAndPolicy()
       self.user_fsm_list.append(user_fsm)
       self.user_policy_object_list.append(user_policy_object)
-      self.user_policy_list.append(user_policy)
+      self.name_po_map[name] = user_policy_object
 
       if idx==0:
         self.eventListener = EventListener(user_fsm)
@@ -117,13 +124,14 @@ def resonance(self, mod_list):
 
 
 def parse_config_file(content):
-  mod_list = []
   shortname_mod_list = []
+  name_mod_map = {}
 
   # Get module list and import.
   match = re.search('MODULES = \{(.*)\}\n+COMPOSITION = \{',content, flags=re.DOTALL)
   if match:
     modules_list = match.group(1).split(',')
+    print '\n*** Specified Modules are: ***'
     for m in modules_list:
       corrected_m = m.strip('\n').strip()
       if corrected_m != '' and corrected_m.startswith('#') is False:
@@ -132,17 +140,23 @@ def parse_config_file(content):
         except Exception as ex:
           print 'Import Exception: ', ex
           sys.exit(1)
-        mod_list.append(mod)
+
         split_list = corrected_m.split('.')
         shortname_mod_list.append(split_list[-1])
+        name_mod_map[split_list[-1]] = mod
+        print corrected_m + ' (' + split_list[-1] + ')'
 
   # Get Composition.
   match = re.search('COMPOSITION = \{(.*)\}',content, flags=re.DOTALL)
   if match:
-    composition_str = match.group(1).strip('\n').strip()
-    print composition_str
+    compose_list = match.group(1).split('\n')
+    for compose in compose_list:
+      composition_str = compose.strip('\n').strip()
+      if composition_str != '' and composition_str.startswith('#') is False:
+        print '\n\n*** The Policy Composition is: ***\n' + composition_str + '\n'
+        break
 
-  return mod_list
+  return name_mod_map, composition_str
 
 """ Main Method """
 def main(config):
@@ -155,10 +169,10 @@ def main(config):
 
   content = fd.read()
   fd.close()
-  mod_list = parse_config_file(content)
+  name_mod_map, composition_str  = parse_config_file(content)
 
-  if len(mod_list) == 0:
+  if len(name_mod_map) == 0:
     print 'Config file seems incorrect. Exiting.'
     sys.exit(1)
 
-  return dynamic(resonance)(mod_list) >> dynamic(learn)()
+  return dynamic(resonance)(name_mod_map, composition_str) >> dynamic(learn)()

@@ -63,7 +63,5 @@ def setupStateMachineAndPolicy():
 
 
 ################### Don't Touch Below ###################
-  # Build single policy by composing multiple policies
-  policy = policy_object.policy()
 
-  return fsm, policy_object, policy
+  return fsm, policy_object
