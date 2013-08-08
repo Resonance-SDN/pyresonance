@@ -176,3 +176,4 @@ def main(config):
     sys.exit(1)
 
   return dynamic(resonance)(name_mod_map, composition_str) >> dynamic(learn)()
+#  return dynamic(resonance)(name_mod_map, composition_str)
