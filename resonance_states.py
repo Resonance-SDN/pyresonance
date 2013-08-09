@@ -21,6 +21,9 @@ class ResonanceStateMachine():
         manager = Manager()
         self.flow_state_map = manager.dict()
         self.flow_state_map.clear()
+        self.fields_list = ['dstmac', 'protocol', 'tos', 'vlan_pcp', 'srcip', \
+                       'inport', 'ethtype', 'dstport', 'dstip', \
+                       'srcport', 'srcmac', 'vlan_id']
         return
 
     def transition_callback(self, cb, arg):
@@ -34,81 +37,106 @@ class ResonanceStateMachine():
         state = event_msg['data']
 
         msgtype = event_msg['event_type']
-        host  = state['data']
+        flow = state['data']
         next_state = state['value']
 
-        return (msgtype, host, next_state)
+        return (msgtype, flow, next_state)
 
     def handleMessage(self, msg, queue):
 
-        msgtype, host, next_state = self.parse_json(msg)
+        msgtype, flow, next_state = self.parse_json(msg)
 
         if DEBUG == True:
-            print "HANDLE", next_state, host
+            print "HANDLE", next_state, flow
 
         # In the parent class, we just do the transition.
         # We don't type check the message type
-        self.state_transition(next_state, host, queue)
+        self.state_transition(next_state, flow, queue)
 
     
-    def check_state(self, host):
+    def check_state(self, flow):
 
-        host_str = str(host)
+        flow_str = str(flow)
 
-        if self.flow_state_map.has_key(host_str):
-            state = self.flow_state_map[host_str] 
+        if self.flow_state_map.has_key(flow_str):
+            state = self.flow_state_map[flow_str] 
         else:
             state = 'default'
 
         if DEBUG == True:
-            print "check_state", host_str, state            
+            print "check_state", flow_str, state            
 
         return state
 
-    def get_hosts_in_state(self, state):
+    def get_flows_in_state(self, state):
 
-        hosts = []
+        flows = []
 
-        for host in self.flow_state_map.keys():
-            if (self.flow_state_map[host] == state):
-                hosts.append(host)
+        for flow in self.flow_state_map.keys():
+            if (self.flow_state_map[flow] == state):
+                flows.append(flow)
 
-        return hosts
+        return flows
         
 
-    def state_transition(self, next_state, host, queue, previous_state=None):
+    def state_transition(self, next_state, flow, queue, previous_state=None):
 
-        state = self.check_state(host) 
+        state = self.check_state(flow) 
         if previous_state is not None:
             if state != previous_state:
                 print 'Given previous state is incorrect! Do nothing.'
                 return
         else: 
-            print "state_transition ->", str(host), next_state
+            print "state_transition ->", str(flow), next_state
             queue.put('transition')
-            self.flow_state_map[str(host)] = next_state
+            self.flow_state_map[str(flow)] = next_state
             if DEBUG == True:
                 print "CURRENT STATES: ", self.flow_state_map
 
+    def state_match_with_current_flow(self, state):
+        matching_list = []
+        flows = self.get_flows_in_state(state)
+
+        for f in flows:
+            match_str = 'match('
+            flow_map = eval(f)
+            for idx,field in enumerate(self.fields_list):
+                if flow_map[field] != None:
+                    if match_str.endswith('(') is False:
+                        match_str = match_str + ','
+
+                    if field.endswith('mac') is True:
+                        match_str = match_str + field+"=MAC('"+str(flow_map[field])+"')"
+                    elif  field.endswith('ip') is True:
+                        match_str = match_str + field+"='"+str(flow_map[field])+"'"
+                    else:
+                        match_str = match_str + field+'='+str(flow_map[field])
+            match_str = match_str + ')'
+            print match_str
+            match_predicate = eval(match_str)
+            if match_str.__eq__('match()') is False:
+                matching_list.append(match_predicate)
+  
+        return parallel(matching_list)
 
         
 class AuthStateMachine(ResonanceStateMachine): 
 
     def handleMessage(self, msg, queue):
 
-        msgtype, host, next_state = self.parse_json(msg)        
+        msgtype, flow, next_state = self.parse_json(msg)        
 
         if DEBUG == True:
-            print "AUTH HANDLE", host, next_state
+            print "AUTH HANDLE", flow, next_state
 
         # in the subclass, we type check the message type
         if msgtype == EVENT_TYPE_AUTH:
-            self.state_transition(next_state, host, queue)
+            self.state_transition(next_state, flow, queue)
         else:
             print "Auth: ignoring message type."
 
     def get_auth_hosts(self):
-        return self.get_hosts_in_state('authenticated')
+        return self.get_flows_in_state('authenticated')
 
 
 
@@ -116,16 +144,16 @@ class IDSStateMachine(ResonanceStateMachine):
 
     def handleMessage(self, msg, queue):
 
-        msgtype, host, next_state = self.parse_json(msg)        
+        msgtype, flow, next_state = self.parse_json(msg)        
 
         if DEBUG == True:
-            print "IDS HANDLE", host, next_state
+            print "IDS HANDLE", flow, next_state
 
         # in the subclass, we type check the message type
         if msgtype == EVENT_TYPE_IDS:
-            self.state_transition(next_state, host, queue)
+            self.state_transition(next_state, flow, queue)
         else:
             print "IDS: ignoring message type."
 
     def get_clean_hosts(self):
-        return self.get_hosts_in_state('clean')
+        return self.get_flows_in_state('clean')
