@@ -50,25 +50,13 @@ class ServerLBPolicy(ResonancePolicy):
         # This main policy should return a right state policy based on the 
         # state of the incoming packet.
     """
-#    nolimit_flows = self.fsm.get_flows_in_state_2('nolimit')
-#    limit_flows = self.fsm.get_flows_in_state_2('limit')
-
-    # Get list of hosts from each state 
-#    nolimit_flows = self.fsm.get_hosts_in_state('nolimit')
-#    limit_flows = self.fsm.get_hosts_in_state('limit')
-
+    # Match incoming flow with each state's flows
     match_nolimit_flows = self.fsm.state_match_with_current_flow('nolimit')
     match_limit_flows = self.fsm.state_match_with_current_flow('limit')
-
-    # Match current incoming packet with lists
-#    match_nolimit_hosts = parallel([match(srcip=host_ip) | match(dstip=host_ip) for host_ip in nolimit_hosts])
-    match_limit_hosts = parallel([match(srcip=host_ip) | match(dstip=host_ip) for host_ip in limit_hosts])
 
     # Create state policies for each state
     p1 =  if_(match_nolimit_flows,self.no_rate_limit_policy(), self.default_limit_policy())
     p2 =  if_(match_limit_flows,self.rate_limit_policy(), self.default_limit_policy())
-#    p1 =  if_(match_nolimit_hosts,self.no_rate_limit_policy(), self.default_limit_policy())
-#    p2 =  if_(match_limit_hosts,self.rate_limit_policy(), self.default_limit_policy())
 
     # Parallel compositon 
     return p1 + p2

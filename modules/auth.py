@@ -19,11 +19,20 @@ class AuthPolicy_T(ResonancePolicy):
   def __init__(self, fsm):
     self.fsm = fsm
 
+
+  def allow_policy(self):
+    return passthrough
+
   def policy(self):
-    auth_hosts = self.fsm.get_auth_hosts()
-    print "authenticated hosts: " + str(auth_hosts)
-    return parallel([match(srcip=authhost)
-                     for authhost in auth_hosts])
+
+    # Match incoming flow with each state's flows
+    match_auth_flows = self.fsm.state_match_with_current_flow('authenticated')
+
+    # Create state policies for each state
+    p1 =  if_(match_auth_flows,self.allow_policy(), drop)
+
+    # Parallel compositon 
+    return p1
 
 ################################################################################
 # CUSTOMIZE: IMPLEMENT STATES BELOW                                            #
@@ -41,13 +50,6 @@ class AuthStateMachine_T(ResonanceStateMachine):
             self.state_transition(next_state, host, queue)
         else:
             print "Auth: ignoring message type."
-
-    def get_auth_hosts(self):
-        return self.get_hosts_in_state('authenticated')
-
-    def get_policy_name(self):
-        return 'authentication'
-
 
 ################################################################################
 # CUSTOMIZE: INSTANTIATE YOUR STATES AND POLICIES BELOW                        #

@@ -18,13 +18,20 @@ class IDSPolicy_T(ResonancePolicy):
 
   def __init__(self, fsm):
     self.fsm = fsm
+ 
+  def allow_policy(self):
+    return passthrough
 
   def policy(self):
-    clean_hosts = self.fsm.get_hosts_in_state('clean')
-    print "clean hosts: " + str(clean_hosts)
-    return parallel([match(srcip=cleanhost)
-                     for cleanhost in clean_hosts])
 
+    # Match incoming flow with each state's flows
+    match_clean_flows = self.fsm.state_match_with_current_flow('clean')
+
+    # Create state policies for each state
+    p1 =  if_(match_clean_flows,self.allow_policy(), drop)
+
+    # Parallel compositon 
+    return p1
 
 ################################################################################
 # CUSTOMIZE: IMPLEMENT STATES BELOW                                            #
@@ -41,10 +48,6 @@ class IDSStateMachine_T(ResonanceStateMachine):
             self.state_transition(next_state, host, queue)
         else:
             print "IDS: ignoring message type."
-
-    def get_policy_name(self):
-        return 'ids'
-
 
 ################################################################################
 # CUSTOMIZE: INSTANTIATE YOUR STATES AND POLICIES BELOW                        #
