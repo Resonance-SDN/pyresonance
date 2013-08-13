@@ -67,21 +67,28 @@ class ServerLBPolicy(ResonancePolicy):
 #                                                                              #
 ################################################################################
 class ServerLBStateMachine(ResonanceStateMachine):
-    def handleMessage(self, msg, queue):
-        msgtype, host, next_state = self.parse_json(msg)        
+  def handleMessage(self, msg, queue):
+    msgtype, flow, data_type, data_value = self.parse_json(msg)
 
-        """ # CHECK FOR RIGHT MESSAGE TYPE, DO WHAT YOU WANT TO DO WITH MESSAGE #
-            # Check whether the arrived JSON message has the right type
-            # for your state machine, and define intended behavior. If not, ignore.
-            # You can define Event Types in "resonance_eventTypes.py".
-            # Ask administrator to add your user-defined event type here.
-        """
-        # in the subclass, we type check the message type
-        if msgtype == Event_Type_Map['EVENT_TYPE_LB']:
-            self.state_transition(next_state, host, queue)
-        else:
-            print "Message type is not for this state machine: ignoring message."
+    """ # CHECK FOR RIGHT MESSAGE TYPE, DO WHAT YOU WANT TO DO WITH MESSAGE #
+        # Check whether the arrived JSON message has the right type
+        # for your state machine, and define intended behavior. If not, ignore.
+        # You can define Event Types in "resonance_eventTypes.py".
+        # Ask administrator to add your user-defined event type here.
+    """
+    if DEBUG == True:
+      print "LB HANDLE: ", flow 
 
+    if data_type == Data_Type_Map['state']:
+      # in the subclass, we type check the message type
+      if msgtype == Event_Type_Map['EVENT_TYPE_LB']:
+          self.state_transition(data_value, flow, queue)
+      else:
+          print "LB: ignoring message type."
+
+    elif data_type == Data_Type_Map['info']:
+      pass
+ 
 
 ################################################################################
 # CUSTOMIZE: INSTANTIATE YOUR STATES AND POLICIES BELOW                        #

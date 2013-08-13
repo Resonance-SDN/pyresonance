@@ -9,11 +9,12 @@ from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 import json
 from multiprocessing import Process, Manager
+from resonance_eventTypes import *
 
 DEBUG = False
 
-EVENT_TYPE_AUTH, EVENT_TYPE_IDS = range(2)
-EVENT_CODE_AUTH_LOGIN, EVENT_CODE_AUTH_LOGOUT = range(2)
+#EVENT_TYPE_AUTH, EVENT_TYPE_IDS = range(2)
+#EVENT_CODE_AUTH_LOGIN, EVENT_CODE_AUTH_LOGOUT = range(2)
 
 class ResonanceStateMachine():
 
@@ -35,24 +36,29 @@ class ResonanceStateMachine():
         
         event_msg = json_msg['event']
         state = event_msg['data']
-
         msgtype = event_msg['event_type']
         flow = state['data']
-        next_state = state['value']
+        data_type = state['data_type']
+        data_value = state['value']
 
-        return (msgtype, flow, next_state)
+        return (msgtype, flow, data_type, data_value)
 
     def handleMessage(self, msg, queue):
 
-        msgtype, flow, next_state = self.parse_json(msg)
+        msgtype, flow, data_type, data_value = self.parse_json(msg)
 
         if DEBUG == True:
-            print "HANDLE", next_state, flow
+            print "HANDLE", flow
 
-        # In the parent class, we just do the transition.
-        # We don't type check the message type
-        self.state_transition(next_state, flow, queue)
+        if data_type == Data_Type_Map['state']:
+          # In the parent class, we just do the transition.
+          # We don't type check the message type
+          self.state_transition(data_value, flow, queue)
 
+        # User should define own handle message, 
+        # especially for handling information values, not state values.
+        elif data_type == Data_Type_Map['info']:
+          pass
     
     def check_state(self, flow):
 
@@ -119,41 +125,41 @@ class ResonanceStateMachine():
   
         return parallel(matching_list)
 
-        
-class AuthStateMachine(ResonanceStateMachine): 
-
-    def handleMessage(self, msg, queue):
-
-        msgtype, flow, next_state = self.parse_json(msg)        
-
-        if DEBUG == True:
-            print "AUTH HANDLE", flow, next_state
-
-        # in the subclass, we type check the message type
-        if msgtype == EVENT_TYPE_AUTH:
-            self.state_transition(next_state, flow, queue)
-        else:
-            print "Auth: ignoring message type."
-
-    def get_auth_hosts(self):
-        return self.get_flows_in_state('authenticated')
-
-
-
-class IDSStateMachine(ResonanceStateMachine): 
-
-    def handleMessage(self, msg, queue):
-
-        msgtype, flow, next_state = self.parse_json(msg)        
-
-        if DEBUG == True:
-            print "IDS HANDLE", flow, next_state
-
-        # in the subclass, we type check the message type
-        if msgtype == EVENT_TYPE_IDS:
-            self.state_transition(next_state, flow, queue)
-        else:
-            print "IDS: ignoring message type."
-
-    def get_clean_hosts(self):
-        return self.get_flows_in_state('clean')
+#class AuthStateMachine(ResonanceStateMachine): 
+#
+#    def handleMessage(self, msg, queue):
+#
+#        msgtype, flow, data_type, data_value = self.parse_json(msg)        
+#
+#        if DEBUG == True:
+#            print "AUTH HANDLE", flow, next_state
+#
+#
+#        # in the subclass, we type check the message type
+#        if msgtype == Event_Type_Map['EVENT_TYPE_AUTH']:
+#            self.state_transition(next_state, flow, queue)
+#        else:
+#            print "Auth: ignoring message type."
+#
+#    def get_auth_hosts(self):
+#        return self.get_flows_in_state('authenticated')
+#
+#
+#
+#class IDSStateMachine(ResonanceStateMachine): 
+#
+#    def handleMessage(self, msg, queue):
+#
+#        msgtype, flow, next_state = self.parse_json(msg)        
+#
+#        if DEBUG == True:
+#            print "IDS HANDLE", flow, next_state
+#
+#        # in the subclass, we type check the message type
+#        if msgtype == Event_Type_Map['EVENT_TYPE_IDS']:
+#            self.state_transition(next_state, flow, queue)
+#        else:
+#            print "IDS: ignoring message type."
+#
+#    def get_clean_hosts(self):
+#        return self.get_flows_in_state('clean')

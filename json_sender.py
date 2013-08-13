@@ -23,6 +23,7 @@ CTRL_ADDR = '127.0.0.1'
 CONN_PORT = 50001
 
 eventTypes = {'auth': 0, 'ids': 1, 'lb': 2}
+DataValueTypes = {'state': 0, 'info': 1 }
 
 def main():
 
@@ -41,8 +42,11 @@ def main():
     op.add_option( '--event-type', '-e', type='choice', dest="eventType",\
                      choices=['auth','ids', 'lb'], help = '|'.join( ['auth','ids','lb'] )  )
 
-    op.add_option( '--event-value', '-V', action="store",  \
-                     dest="eventValue", help = 'The state name for this flow'  )
+    op.add_option( '--event-state', '-s', action="store",  \
+                     dest="eventState", help = 'The state name for this flow.'  )
+
+    op.add_option( '--event-info', '-i', action="store",  \
+                     dest="eventInfo", help = 'The information sent about this flow. Give path to file that contains the information. Information should be in JSON format.'  )
 
 
     # Parsing and processing
@@ -68,6 +72,8 @@ def main():
         fd = open(options.ffile, 'r')
       except IOError as ex:
         print 'Error opening file: ', ex
+        print 'Aborting.\n'
+        sys.exit(1)
       content = fd.read()
       flow = content
 
@@ -131,6 +137,27 @@ def main():
     print "\nData Payload = " + str(data_payload) + '\n'
 
 
+    # Sending state value or information?
+    send_value = None
+    data_type_val = None
+    if options.eventState is not None:
+      send_value = options.eventState
+      data_value_type = DataValueTypes['state']
+    elif options.eventInfo is not None:
+      try:
+        fd = open(options.eventInfo, 'r')
+      except IOError as ex:
+        print 'Error opening file: ', ex
+        print 'Aborting.\n'
+        sys.exit(1)
+      content = fd.read()
+      send_value = content
+      data_value_type = DataValueTypes['info']
+    else: 
+      print 'No value (state or info) for flow specificed.'
+      print 'Aborting.\n'
+      sys.exit(1)
+
     # Construct JSON message
     data = dict(event=dict(event_id=1,                            \
                            event_type=eventnum,                   \
@@ -140,9 +167,9 @@ def main():
                                        description=1,             \
                                        ip_addr=1,                 \
                                        mac_addr=1),               \
-                           data=dict(data_type=eventnum,          \
+                           data=dict(data_type=data_value_type,   \
                                      data=data_payload,           \
-                                     value=options.eventValue),   \
+                                     value=send_value),   \
                            transition=dict(prev=1,    \
                                            next=1)    \
                            ))

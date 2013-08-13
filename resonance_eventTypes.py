@@ -5,6 +5,11 @@
 # author: Nick Feamster (feamster@cc.gatech.edu)                               #
 ################################################################################
 
+Data_Type_Map = {}
+######### Data TYPE MAP ######### 
+Data_Type_Map['state'] = 0
+Data_Type_Map['info'] = 1
+
 Event_Type_Map = {}
 ######### EVENT TYPE MAP ######### 
 Event_Type_Map['EVENT_TYPE_AUTH'] = 0

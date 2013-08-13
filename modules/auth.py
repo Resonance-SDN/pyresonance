@@ -40,16 +40,21 @@ class AuthPolicy_T(ResonancePolicy):
 ################################################################################
 
 class AuthStateMachine_T(ResonanceStateMachine):
-    def handleMessage(self, msg, queue):
-        msgtype, host, next_state = self.parse_json(msg)        
-        if DEBUG == True:
-            print "AUTH HANDLE", host, next_state
+  def handleMessage(self, msg, queue):
+    msgtype, flow, data_type, data_value = self.parse_json(msg)
+    if DEBUG == True:
+      print "AUTH HANDLE: ", flow 
 
-        # in the subclass, we type check the message type
-        if msgtype == Event_Type_Map['EVENT_TYPE_AUTH']:
-            self.state_transition(next_state, host, queue)
-        else:
-            print "Auth: ignoring message type."
+    if data_type == Data_Type_Map['state']:
+      # in the subclass, we type check the message type
+      if msgtype == Event_Type_Map['EVENT_TYPE_AUTH']:
+          self.state_transition(data_value, flow, queue)
+      else:
+          print "Auth: ignoring message type."
+
+    elif data_type == Data_Type_Map['info']:
+      pass
+    
 
 ################################################################################
 # CUSTOMIZE: INSTANTIATE YOUR STATES AND POLICIES BELOW                        #

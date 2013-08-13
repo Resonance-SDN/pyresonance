@@ -38,16 +38,22 @@ class IDSPolicy_T(ResonancePolicy):
 #                                                                              #
 ################################################################################
 class IDSStateMachine_T(ResonanceStateMachine): 
-    def handleMessage(self, msg, queue):
-        msgtype, host, next_state = self.parse_json(msg)        
-        if DEBUG == True:
-            print "IDS HANDLE", host, next_state
 
-        # in the subclass, we type check the message type
-        if msgtype == Event_Type_Map['EVENT_TYPE_IDS']:
-            self.state_transition(next_state, host, queue)
-        else:
-            print "IDS: ignoring message type."
+  def handleMessage(self, msg, queue):
+    msgtype, flow, data_type, data_value = self.parse_json(msg)
+    if DEBUG == True:
+      print "IDS HANDLE: ", flow 
+
+    if data_type == Data_Type_Map['state']:
+      # in the subclass, we type check the message type
+      if msgtype == Event_Type_Map['EVENT_TYPE_IDS']:
+          self.state_transition(data_value, flow, queue)
+      else:
+          print "IDS: ignoring message type."
+
+    elif data_type == Data_Type_Map['info']:
+      pass
+
 
 ################################################################################
 # CUSTOMIZE: INSTANTIATE YOUR STATES AND POLICIES BELOW                        #
