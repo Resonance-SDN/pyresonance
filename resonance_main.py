@@ -51,7 +51,44 @@ import re
 DEBUG = True
 
 """ Dynamic resonance policy """
-def resonance(self, name_mod_map, composition_str):
+def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
+
+  # Make policy_map
+  def make_policy_map():
+    self.policy_map = {}
+
+    if DEBUG is True:
+      print "\n*** Policy composition for each src-dst pair: ***"
+
+    for src in self.ip_to_modulename_map:
+      for dst in self.ip_to_modulename_map:
+        if src!='core' and dst!='core':
+          src_dst_tuple = (src,dst)
+          # If traffic is within one departement: 
+          if self.ip_to_modulename_map[src]==self.ip_to_modulename_map[dst]:
+            self.policy_map[src_dst_tuple] = [self.name_po_map.get(self.ip_to_modulename_map[src])]
+            if DEBUG is True:
+              print str(src_dst_tuple) + ":\t" + str(self.ip_to_modulename_map[src])
+
+          # Else,
+          else:
+            self.policy_map[src_dst_tuple] = [self.name_po_map.get(self.ip_to_modulename_map[src]), \
+                                              self.name_po_map.get(self.ip_to_modulename_map['core']),\
+                                              self.name_po_map.get(self.ip_to_modulename_map[dst])]
+
+            if DEBUG is True:
+              print str(src_dst_tuple) + ":\t" +  str(self.ip_to_modulename_map[src]) + " >> " + str(self.ip_to_modulename_map['core']) + " >> " + str(self.ip_to_modulename_map[dst])
+
+  # Composing policy
+  def compose_policy_departments():
+    final_policy = drop
+    for m in self.policy_map:
+      if str(m[0])!='core' and str(m[1])!='core':
+        p = if_(match(srcip=str(m[0]), dstip=str(m[1])), \
+                sequential([i.policy() for i in self.policy_map[m]]), drop)
+        final_policy = final_policy + p
+
+    return final_policy
 
   # Composing policy
   def compose_policy():
@@ -71,8 +108,11 @@ def resonance(self, name_mod_map, composition_str):
 
   # Updating policy
   def update_policy(pkt=None):
-    self.policy = compose_policy()
-    print self.policy
+    if self.composition_str == '':
+      self.policy = compose_policy_departments()
+    else:  
+      self.policy = compose_policy()
+#    print self.policy
 
   self.update_policy = update_policy
 
@@ -89,6 +129,7 @@ def resonance(self, name_mod_map, composition_str):
 
   def initialize():
     self.composition_str = composition_str
+    self.ip_to_modulename_map = ip_to_modulename_map
     self.name_mod_map = name_mod_map
     self.name_po_map = {}
     self.user_fsm_list = []
@@ -117,15 +158,20 @@ def resonance(self, name_mod_map, composition_str):
     t.daemon = True
     t.start()
 
+    # Make policy map for 'auto' mode.
+    # This method will return immediately if the mode is 'manual'.
+    make_policy_map()
+
     # Set the policy
     self.update_policy()
 
   initialize()
 
 
-def parse_config_file(content):
-  shortname_mod_list = []
-  name_mod_map = {}
+def parse_config_file(content, mode):
+  name_mod_map = {}           # {shortname : module_object} dictionary
+  composition_str = ''        # Policy composition in string format (in manual mode)
+  ip_to_modulename_map = {}   # {ip_address : shortname} dictionary
 
   # Get module list and import.
   match = re.search('MODULES = \{(.*)\}\n+COMPOSITION = \{',content, flags=re.DOTALL)
@@ -142,38 +188,63 @@ def parse_config_file(content):
           sys.exit(1)
 
         split_list = corrected_m.split('.')
-        shortname_mod_list.append(split_list[-1])
         name_mod_map[split_list[-1]] = mod
         print corrected_m + ' (' + split_list[-1] + ')'
 
-  # Get Composition.
-  match = re.search('COMPOSITION = \{(.*)\}',content, flags=re.DOTALL)
-  if match:
-    compose_list = match.group(1).split('\n')
-    for compose in compose_list:
-      composition_str = compose.strip('\n').strip()
-      if composition_str != '' and composition_str.startswith('#') is False:
-        print '\n\n*** The Policy Composition is: ***\n' + composition_str + '\n'
-        break
+  if mode.__eq__('auto'):
+    # Get Departments
+    match = re.search('DEPARTMENTS = \{(.*)\}',content, flags=re.DOTALL)
+    if match:
+      policy_list = match.group(1).split('\n')
+      for policy in policy_list:
+        policy_str = policy.strip('\n').strip()
+        if policy_str !='' and policy_str.startswith('#') is False:
+          line = policy_str.split(':')
+          ip_to_modulename_map[str(line[0]).strip(' ')] = str(line[1]).strip(' ')
 
-  return name_mod_map, composition_str
+#    return name_mod_map, '', ip_to_modulename_map
+
+  elif mode.__eq__('manual'):
+    # Get Composition.
+    match = re.search('COMPOSITION = \{(.*)\}',content, flags=re.DOTALL)
+    if match:
+      compose_list = match.group(1).split('\n')
+      for compose in compose_list:
+        composition_str = compose.strip('\n').strip()
+        if composition_str != '' and composition_str.startswith('#') is False:
+          print '\n\n*** The Policy Composition is: ***\n' + composition_str + '\n'
+          break
+ 
+
+  # Return          
+  return name_mod_map, composition_str, ip_to_modulename_map
+
 
 """ Main Method """
-def main(config):
-  # Read configuration file and apply.
+def main(config, mode):
+  # Open configuration file.
   try: 
     fd = open(config, 'r')
   except IOError as ex:
     print 'IO Exception: ', ex
     sys.exit(1)
 
+  # Get mode, check validity.
+  if mode!='auto' and mode!='manual':
+    print 'Wrong mode value. Exit'
+    sys.exit(1)
+
+  # Read config file
   content = fd.read()
   fd.close()
-  name_mod_map, composition_str  = parse_config_file(content)
+
+  # Parse configuration file.
+  name_mod_map, composition_str, ip_to_modulename_map  = parse_config_file(content, mode)
 
   if len(name_mod_map) == 0:
     print 'Config file seems incorrect. Exiting.'
     sys.exit(1)
 
-  return dynamic(resonance)(name_mod_map, composition_str) >> dynamic(learn)()
+  # Run Resonance main.
+  return dynamic(resonance)(name_mod_map, composition_str, ip_to_modulename_map) >> dynamic(learn)()
 #  return dynamic(resonance)(name_mod_map, composition_str)
