@@ -17,13 +17,14 @@ import struct
 import json
 from optparse import OptionParser
 import re
+import time
 
 
 CTRL_ADDR = '127.0.0.1'
 CONN_PORT = 50001
 
 eventTypes = {'auth': 0, 'ids': 1, 'lb': 2}
-DataValueTypes = {'state': 0, 'info': 1 }
+DataValueTypes = {'state': 0, 'info': 1, 'query': 2}
 
 def main():
 
@@ -47,11 +48,19 @@ def main():
 
     op.add_option( '--event-info', '-i', action="store",  \
                      dest="eventInfo", help = 'The information sent about this flow. Give path to file that contains the information. Information should be in JSON format.'  )
+ 
+    op.add_option( '--event-query', '-q', action="store",  \
+                     dest="eventQuery", help = 'Query for the state information about this flow.'  )
 
 
     # Parsing and processing
     options, args = op.parse_args()
-    eventnum = eventTypes[options.eventType]
+    if options.eventType is not None:
+      eventnum = eventTypes[options.eventType]
+    elif options.eventQuery is not None:
+#      eventnum = eventTypes[options.eventQuery]
+      eventnum = 0
+      
     flow = ''
     data_payload=dict(inport=None,    \
                       srcmac=None,    \
@@ -153,6 +162,10 @@ def main():
       content = fd.read()
       send_value = content
       data_value_type = DataValueTypes['info']
+
+    elif options.eventQuery is not None:
+      data_value_type = DataValueTypes['query']
+
     else: 
       print 'No value (state or info) for flow specificed.'
       print 'Aborting.\n'
@@ -183,7 +196,12 @@ def main():
 
     # send data
     totalsent = 0
-    s.send(json.dumps(data))
+    s.sendall(json.dumps(data))
+ 
+    # Receive return value
+    recvdata = s.recv(1024)
+    print recvdata
+
     s.close()
 
 ### START ###

@@ -9,6 +9,7 @@ Data_Type_Map = {}
 ######### Data TYPE MAP ######### 
 Data_Type_Map['state'] = 0
 Data_Type_Map['info'] = 1
+Data_Type_Map['query'] = 2
 
 Event_Type_Map = {}
 ######### EVENT TYPE MAP ######### 

@@ -56,11 +56,12 @@ class EventListener():
       while 1:
         data = conn.recv(1024)
         if not data: 
+          conn.close()
           break
         json_msg = json_msg + data
         
-      conn.close()
+        for fsm in self.fsms:
+          retval = fsm.handleMessage(json_msg, queue)
+          conn.sendall(retval)
 
-      for fsm in self.fsms:
-        fsm.handleMessage(json_msg, queue)
 

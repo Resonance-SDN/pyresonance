@@ -140,7 +140,7 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
 
     # Get user-defined FSMs, make them, make eventListeners
     for idx,name in enumerate(self.name_mod_map):
-      user_fsm, user_policy_object = self.name_mod_map[name].setupStateMachineAndPolicy()
+      user_fsm, user_policy_object = self.name_mod_map[name].setupStateMachineAndPolicy(name)
       self.user_fsm_list.append(user_fsm)
       self.user_policy_object_list.append(user_policy_object)
       self.name_po_map[name] = user_policy_object
@@ -151,11 +151,11 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
         self.eventListener.add_fsm(user_fsm)
 
     # Make main event listener. For querying states.
-    main_fsm = ResonanceStateMachine()
-    if self.eventListener:
-      self.eventListener.add_fsm(main_fsm)
-    else:
-      self.eventListener = EventListener(main_fsm)
+#    main_fsm = ResonanceStateMachine()
+#    if self.eventListener:
+#      self.eventListener.add_fsm(main_fsm)
+#    else:
+#      self.eventListener = EventListener(main_fsm)
 
     # Start eventListener with queue
     self.eventListener.start(queue)
