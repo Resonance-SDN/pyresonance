@@ -150,6 +150,13 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
       else:
         self.eventListener.add_fsm(user_fsm)
 
+    # Make main event listener. For querying states.
+    main_fsm = ResonanceStateMachine()
+    if self.eventListener:
+      self.eventListener.add_fsm(main_fsm)
+    else:
+      self.eventListener = EventListener(main_fsm)
+
     # Start eventListener with queue
     self.eventListener.start(queue)
 

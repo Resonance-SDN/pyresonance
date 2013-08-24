@@ -59,6 +59,9 @@ class ResonanceStateMachine():
         # especially for handling information values, not state values.
         elif data_type == Data_Type_Map['info']:
           pass
+
+        elif data_type == Data_Type_Map['query']:
+          pass
     
     def check_state(self, flow):
 
