@@ -3,6 +3,7 @@
 # Resonance implemented with Pyretic platform                                  #
 # author: Hyojoon Kim (joonk@gatech.edu)                                       #
 # author: Nick Feamster (feamster@cc.gatech.edu)                               #
+# author: Arpit Gupta (glex.qsd@gmail.com)
 ################################################################################
 
 from pyretic.lib.corelib import *
