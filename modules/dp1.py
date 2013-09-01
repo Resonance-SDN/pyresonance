@@ -9,16 +9,17 @@ from ..resonance_policy import *
 from ..resonance_states import *
 from ..resonance_eventTypes import *
 from ..resonance_handlers import EventListener
+from pyretic.examples.load_balancer import *
 
 ################################################################################
-# CUSTOMIZE: IMPLEMENT POLICIES BELOW                                          #
-#                                                                              #
+# Mininet command to give                                                      
+# $ sudo mn --controller=remote,ip=127.0.0.1 --custom example_topos.py --topo linear
+#
 ################################################################################
 
-class AuthPolicy_T(ResonancePolicy):
+class AuthPolicy(ResonancePolicy):
   def __init__(self, fsm):
     self.fsm = fsm
-
 
   def allow_policy(self):
     return passthrough
@@ -34,12 +35,8 @@ class AuthPolicy_T(ResonancePolicy):
     # Parallel compositon 
     return p1
 
-################################################################################
-# CUSTOMIZE: IMPLEMENT STATES BELOW                                            #
-#                                                                              #
-################################################################################
-
-class AuthStateMachine_T(ResonanceStateMachine):
+    
+class AuthStateMachine(ResonanceStateMachine):
   def handleMessage(self, msg, queue):
     retval = ''
     msgtype, flow, data_type, data_value = self.parse_json(msg)
@@ -54,10 +51,7 @@ class AuthStateMachine_T(ResonanceStateMachine):
       else:
           print "Auth: ignoring message type."
 
-      retval = 'ok'
-
     elif data_type == Data_Type_Map['info']:
-      retval = 'ok'
       pass
 
     elif data_type == Data_Type_Map['query']:
@@ -67,24 +61,17 @@ class AuthStateMachine_T(ResonanceStateMachine):
       return_str = return_str + "\n* State: " + str(state_str) + '\n'
 
       print return_str
-
       retval = return_str
 
     return retval
 
-################################################################################
-# CUSTOMIZE: INSTANTIATE YOUR STATES AND POLICIES BELOW                        #
-#                                                                              #
-################################################################################
+
 def setupStateMachineAndPolicy(name):
 
   # Create finite state machine object
-  fsm = AuthStateMachine_T(name)
+  fsm = AuthStateMachine(name)
 
   # Build policy object from state machine.
-  policy_object = AuthPolicy_T(fsm)
-
-
-################### Don't Touch Below ###################
+  policy_object = AuthPolicy(fsm)
 
   return fsm, policy_object

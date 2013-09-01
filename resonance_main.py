@@ -112,7 +112,7 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
       self.policy = compose_policy_departments()
     else:  
       self.policy = compose_policy()
-#    print self.policy
+    print self.policy
 
   self.update_policy = update_policy
 

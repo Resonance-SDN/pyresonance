@@ -21,16 +21,6 @@ class AuthPolicy(ResonancePolicy):
   def __init__(self, fsm):
     self.fsm = fsm
 
-  def redirect_policy(self):
-    public_ip = '0.0.0.0/24'
-    client_ips = '0.0.0.0/24'
-    receive_ip =  [IP('10.0.0.6')]  # Authentication server IP address
-    rewrite_ip_policy = rewrite(zip(client_ips, receive_ip), public_ip)
-    rewrite_mac_policy = if_(match(dstip=IP('10.0.0.6'),ethtype=2048), \
-                             modify(dstmac=MAC('00:00:00:00:00:06')),drop)
-
-    return rewrite_ip_policy >> rewrite_mac_policy
-
   def allow_policy(self):
     return passthrough
 
@@ -40,7 +30,7 @@ class AuthPolicy(ResonancePolicy):
     match_auth_flows = self.fsm.state_match_with_current_flow('authenticated')
 
     # Create state policies for each state
-    p1 =  if_(match_auth_flows,self.allow_policy(), self.redirect_policy())
+    p1 =  if_(match_auth_flows,self.allow_policy(), drop)
 
     # Parallel compositon 
     return p1

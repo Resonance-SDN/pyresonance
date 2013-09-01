@@ -40,7 +40,9 @@ class IDSPolicy_T(ResonancePolicy):
 class IDSStateMachine_T(ResonanceStateMachine): 
 
   def handleMessage(self, msg, queue):
+    retval = ''
     msgtype, flow, data_type, data_value = self.parse_json(msg)
+
     if DEBUG == True:
       print "IDS HANDLE: ", flow 
 
@@ -50,19 +52,34 @@ class IDSStateMachine_T(ResonanceStateMachine):
           self.state_transition(data_value, flow, queue)
       else:
           print "IDS: ignoring message type."
+ 
+      retval = 'ok'
 
     elif data_type == Data_Type_Map['info']:
+      retval = 'ok'
       pass
 
+    elif data_type == Data_Type_Map['query']:
+      state_str = self.check_state(flow)
+
+      return_str = "\n*** State information in module (" + self.module_name + ") ***"
+      return_str = return_str + "\n* Flow: " + str(flow)
+      return_str = return_str + "\n* State: " + str(state_str) + '\n'
+
+      print return_str
+
+      retval = return_str
+
+    return retval
 
 ################################################################################
 # CUSTOMIZE: INSTANTIATE YOUR STATES AND POLICIES BELOW                        #
 #                                                                              #
 ################################################################################
-def setupStateMachineAndPolicy():
+def setupStateMachineAndPolicy(name):
 
   # Create finite state machine object
-  fsm = IDSStateMachine_T()
+  fsm = IDSStateMachine_T(name)
 
   # Build policy object from state machine.
   policy_object = IDSPolicy_T(fsm)
