@@ -68,7 +68,7 @@ class ServerLBPolicy(ResonancePolicy):
 ################################################################################
 class ServerLBStateMachine(ResonanceStateMachine):
   def handleMessage(self, msg, queue):
-    retval = ''
+    retval = 'ok'
     msgtype, flow, data_type, data_value = self.parse_json(msg)
 
     """ # CHECK FOR RIGHT MESSAGE TYPE, DO WHAT YOU WANT TO DO WITH MESSAGE #

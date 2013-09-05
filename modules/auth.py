@@ -38,7 +38,7 @@ class AuthPolicy(ResonancePolicy):
     
 class AuthStateMachine(ResonanceStateMachine):
   def handleMessage(self, msg, queue):
-    retval = ''
+    retval = 'ok'
     msgtype, flow, data_type, data_value = self.parse_json(msg)
 
     if DEBUG == True:
