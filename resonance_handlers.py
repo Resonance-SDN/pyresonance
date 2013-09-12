@@ -62,6 +62,7 @@ class EventListener():
         
         for fsm in self.fsms:
           retval = fsm.handleMessage(json_msg, queue)
-          conn.sendall(retval)
+          if retval != '':
+            conn.sendall(retval)
 
 

@@ -43,6 +43,8 @@ from resonance_states import *
 from resonance_handlers import EventListener
 from multiprocessing import Process, Queue
 from importlib import import_module
+import time
+import subprocess
 import threading
 import os
 import sys
@@ -92,7 +94,6 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
 
   # Composing policy
   def compose_policy():
-    policy = drop
     policy_str = self.composition_str
     
     # Get composition string, replace with relevant ones.
@@ -112,7 +113,11 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
       self.policy = compose_policy_departments()
     else:  
       self.policy = compose_policy()
-    print self.policy
+    # Record
+    ts = time.time()
+    subprocess.call("echo %.7f >> /home/mininet/hyojoon/benchmark/pyresonance-benchmark/event_test/output/process_time/of.txt"%(ts), shell=True)
+
+#    print self.policy
 
   self.update_policy = update_policy
 
