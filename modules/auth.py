@@ -12,7 +12,7 @@ from ..resonance_handlers import EventListener
 from pyretic.examples.load_balancer import *
 
 ################################################################################
-# Mininet command to give                                                      
+# Mininet command to give
 # $ sudo mn --controller=remote,ip=127.0.0.1 --custom example_topos.py --topo linear
 #
 ################################################################################
@@ -20,31 +20,41 @@ from pyretic.examples.load_balancer import *
 class AuthPolicy(ResonancePolicy):
   def __init__(self, fsm):
     self.fsm = fsm
-
+    #print "trigger: "+str(fsm.trigger)
   def allow_policy(self):
     return passthrough
 
   def policy(self):
+    #print "AG: auth policy function called, trigger: "+str(self.fsm.trigger.value)
+    if self.fsm.trigger.value==0:
+      # Match incoming flow with each state's flows
+      match_auth_flows = self.fsm.state_match_with_current_flow('authenticated')
 
-    # Match incoming flow with each state's flows
-    match_auth_flows = self.fsm.state_match_with_current_flow('authenticated')
+      # Create state policies for each state
+      p1 =  if_(match_auth_flows,self.allow_policy(), drop)
 
-    # Create state policies for each state
-    p1 =  if_(match_auth_flows,self.allow_policy(), drop)
+      # Parallel compositon
+      return p1
 
-    # Parallel compositon 
-    return p1
+    else:
+        #print "Auth Module is turned off"
+      return passthrough
 
-    
+
 class AuthStateMachine(ResonanceStateMachine):
   def handleMessage(self, msg, queue):
     retval = 'ok'
     msgtype, flow, data_type, data_value = self.parse_json(msg)
 
     if DEBUG == True:
-      print "AUTH HANDLE: ", flow 
+      print "AUTH HANDLE: ", flow
 
-    if data_type == Data_Type_Map['state']:
+    if data_type == Data_Type_Map['trigger']:
+        #print "call trigger function"
+        self.trigger_module_off(data_value,queue)
+        #print "trigger function called"
+
+    elif data_type == Data_Type_Map['state']:
       # in the subclass, we type check the message type
       if msgtype == Event_Type_Map['EVENT_TYPE_AUTH']:
           self.state_transition(data_value, flow, queue)
