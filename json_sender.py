@@ -4,6 +4,7 @@
 # Georgia Institute of Technology
 # author: Hyojoon Kim
 # author: Nick Feamster (feamster@cc.gatech.edu)                               #
+# author: Arpit Gupta (glex.qsd@gmail.com)
 # date: 2013.06.13, 2013.07.08
 #
 # desc:
@@ -24,7 +25,7 @@ CTRL_ADDR = '127.0.0.1'
 CONN_PORT = 50001
 
 eventTypes = {'auth': 0, 'ids': 1, 'lb': 2}
-DataValueTypes = {'state': 0, 'info': 1, 'query': 2}
+DataValueTypes = {'state': 0, 'info': 1, 'query': 2, 'trigger': 3}
 
 def main():
 
@@ -46,9 +47,12 @@ def main():
     op.add_option( '--event-state', '-s', action="store",  \
                      dest="eventState", help = 'The state name for this flow.'  )
 
+    op.add_option( '--event-trigger', '-t', action="store", \
+                     dest="eventTrigger", help = 'Trigger to turn the module ON/OFF' )
+
     op.add_option( '--event-info', '-i', action="store",  \
                      dest="eventInfo", help = 'The information sent about this flow. Give path to file that contains the information. Information should be in JSON format.'  )
- 
+
     op.add_option( '--event-query', '-q', action="store",  \
                      dest="eventQuery", help = 'Query for the state information about this flow.'  )
 
@@ -60,7 +64,7 @@ def main():
     elif options.eventQuery is not None:
 #      eventnum = eventTypes[options.eventQuery]
       eventnum = 0
-      
+
     flow = ''
     data_payload=dict(inport=None,    \
                       srcmac=None,    \
@@ -90,8 +94,9 @@ def main():
       flow = options.flow_spec
 
     else:
-      print 'No flow specification or any file given. Exit.'
-      return
+        if options.eventTrigger is None:
+          print 'No flow specification or any file given. Exit.'
+          return
 
     # Parse flow
     print "\nFlow = " + flow
@@ -114,7 +119,7 @@ def main():
     m = re.search("dstip=(\d+\.\d+\.\d+\.\d+[\/\d+]*)\s*",flow)
     if m:
       data_payload['dstip'] = m.group(1)
- 
+
     m = re.search("tos=(\d+)\s*",flow)
     if m:
       data_payload['tos'] = m.group(1)
@@ -152,6 +157,10 @@ def main():
     if options.eventState is not None:
       send_value = options.eventState
       data_value_type = DataValueTypes['state']
+    # Adding the option of triggering the module ON/OFF
+    elif options.eventTrigger is not None:
+      send_value = options.eventTrigger
+      data_value_type = DataValueTypes['trigger']
     elif options.eventInfo is not None:
       try:
         fd = open(options.eventInfo, 'r')
@@ -166,7 +175,7 @@ def main():
     elif options.eventQuery is not None:
       data_value_type = DataValueTypes['query']
 
-    else: 
+    else:
       print 'No value (state or info) for flow specificed.'
       print 'Aborting.\n'
       sys.exit(1)
@@ -197,7 +206,7 @@ def main():
     # send data
     totalsent = 0
     s.sendall(json.dumps(data))
- 
+
     # Receive return value
     recvdata = s.recv(1024)
     print recvdata

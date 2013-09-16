@@ -28,6 +28,7 @@ class ResonanceStateMachine():
     self.fields_list = ['dstmac', 'protocol', 'tos', 'vlan_pcp', 'srcip', \
                    'inport', 'ethtype', 'dstport', 'dstip', \
                    'srcport', 'srcmac', 'vlan_id']
+    self.trigger= manager.Value('i',0)
     return
 
   def transition_callback(self, cb, arg):
@@ -36,7 +37,7 @@ class ResonanceStateMachine():
 
   def parse_json(self, msg):
     json_msg = json.loads(msg)
-    
+
     event_msg = json_msg['event']
     state = event_msg['data']
     msgtype = event_msg['event_type']
@@ -60,7 +61,7 @@ class ResonanceStateMachine():
       self.state_transition(data_value, flow, queue)
       retval = 'ok'
 
-    # User should define own handle message, 
+    # User should define own handle message,
     # especially for handling information values, not state values.
     elif data_type == Data_Type_Map['info']:
       retval = 'ok'
@@ -83,12 +84,12 @@ class ResonanceStateMachine():
     flow_str = str(flow)
 
     if self.flow_state_map.has_key(flow_str):
-      state = self.flow_state_map[flow_str] 
+      state = self.flow_state_map[flow_str]
     else:
       state = 'default'
 
     if DEBUG == True:
-      print "check_state", flow_str, state            
+      print "check_state", flow_str, state
 
     return state
 
@@ -101,13 +102,24 @@ class ResonanceStateMachine():
         flows.append(flow)
 
     return flows
-      
+
+  def trigger_module_off(self,trigger_val,queue):
+    #print "trigger_module_off called, trigger: "+str(self.trigger)+" trigger_val: "+str(trigger_val)
+    if self.trigger.value==1:
+      print "Module already turned off. No action required"
+    else:
+      #print "Turning the module off"
+#      self.trigger=trigger_val
+      self.trigger.value = trigger_val
+      #print "new trigger value: "+str(self.trigger.value)
+      queue.put('transition')
+
   def state_transition(self, next_state, flow, queue, previous_state=None):
-    state = self.check_state(flow) 
+    state = self.check_state(flow)
     if previous_state is not None:
       if state != previous_state:
         print 'Given previous state is incorrect! Do nothing.'
-    else: 
+    else:
 #      print "state_transition ->", str(flow), next_state
       queue.put('transition')
       self.flow_state_map[str(flow)] = next_state
@@ -141,7 +153,7 @@ class ResonanceStateMachine():
 
     return parallel(matching_list)
 
-  
+
   def register_switches(self,switch_list):
     self.switch_list = []
     for switch in switch_list:
@@ -155,16 +167,16 @@ class ResonanceStateMachine():
 ##    departmentA = match(switch=1) | match(switch=2) ...
     if len(self.switch_list) == 1 and self.switch_list[0] == 0:
       match_policy = passthrough
-    else: 
+    else:
       match_policy = parallel([(match(switch=i)) for i in self.switch_list])
 
-    return match_policy 
+    return match_policy
 
-#class AuthStateMachine(ResonanceStateMachine): 
+#class AuthStateMachine(ResonanceStateMachine):
 #
 #    def handleMessage(self, msg, queue):
 #
-#        msgtype, flow, data_type, data_value = self.parse_json(msg)        
+#        msgtype, flow, data_type, data_value = self.parse_json(msg)
 #
 #        if DEBUG == True:
 #            print "AUTH HANDLE", flow, next_state
@@ -181,11 +193,11 @@ class ResonanceStateMachine():
 #
 #
 #
-#class IDSStateMachine(ResonanceStateMachine): 
+#class IDSStateMachine(ResonanceStateMachine):
 #
 #    def handleMessage(self, msg, queue):
 #
-#        msgtype, flow, next_state = self.parse_json(msg)        
+#        msgtype, flow, next_state = self.parse_json(msg)
 #
 #        if DEBUG == True:
 #            print "IDS HANDLE", flow, next_state

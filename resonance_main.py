@@ -32,6 +32,7 @@
 # Resonance implemented with Pyretic platform                                  #
 # author: Hyojoon Kim (joonk@gatech.edu)                                       #
 # author: Nick Feamster (feamster@cc.gatech.edu)                               #
+# author: Arpit Gupta (glex.qsd@gmail.com)                                     #
 ################################################################################
 
 from pyretic.lib.corelib import *
@@ -66,7 +67,7 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
       for dst in self.ip_to_modulename_map:
         if src!='core' and dst!='core':
           src_dst_tuple = (src,dst)
-          # If traffic is within one departement: 
+          # If traffic is within one departement:
           if self.ip_to_modulename_map[src]==self.ip_to_modulename_map[dst]:
             self.policy_map[src_dst_tuple] = [self.name_po_map.get(self.ip_to_modulename_map[src])]
             if DEBUG is True:
@@ -102,7 +103,7 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
   # Composing policy
   def compose_policy():
     policy_str = self.composition_str
-    
+
     # Get composition string, replace with relevant ones.
     for name in self.name_po_map:
       idx = policy_str.find(name)
@@ -111,15 +112,17 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
           p_index = self.user_policy_object_list.index(self.name_po_map[name])
           replace_str = 'self.user_policy_object_list[' + str(p_index) + '].policy()'
           policy_str = policy_str.replace(name, replace_str)
- 
+          #if name=='auth':
+          #  print "trigger value from main: "+str(self.user_policy_object_list[p_index].fsm.trigger)
     return eval(policy_str)
 
   # Updating policy
   def update_policy(pkt=None):
+    #print "comp str: "+self.composition_str
     if self.composition_str == '':
 #      self.policy = compose_policy_departments()
       self.policy = compose_policy_departments_switchbased()
-    else:  
+    else:
       self.policy = compose_policy()
     # Record
     ts = time.time()
@@ -132,12 +135,13 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
   # Listen for state transitions.
   def transition_signal_catcher(queue):
     while 1:
-      try:  
+      try:
         line = queue.get(timeout=.1)
 #        line = queue.get_nowait() # or q.get(timeout=.1)
       except:
         continue
-      else: # Got line. 
+      else: # Got line.
+        #print "AG: calling the update policy"
         self.update_policy()
 
   def initialize():
@@ -203,7 +207,7 @@ def parse_config_file(content, mode):
     for m in modules_list:
       corrected_m = m.strip('\n').strip()
       if corrected_m != '' and corrected_m.startswith('#') is False:
-        try: 
+        try:
           mod = import_module(corrected_m)
         except Exception as ex:
           print 'Import Exception: ', ex
@@ -236,16 +240,16 @@ def parse_config_file(content, mode):
         if composition_str != '' and composition_str.startswith('#') is False:
           print '\n\n*** The Policy Composition is: ***\n' + composition_str + '\n'
           break
- 
 
-  # Return          
+
+  # Return
   return name_mod_map, composition_str, ip_to_modulename_map
 
 
 """ Main Method """
 def main(config, mode):
   # Open configuration file.
-  try: 
+  try:
     fd = open(config, 'r')
   except IOError as ex:
     print 'IO Exception: ', ex
