@@ -14,7 +14,7 @@ from ..resonance_handlers import EventListener
 # CUSTOMIZE: IMPLEMENT POLICIES BELOW                                          #
 #                                                                              #
 ################################################################################
-class IDSPolicyT(ResonancePolicy):
+class IDSPolicy(ResonancePolicy):
 
   def __init__(self, fsm):
     self.fsm = fsm
