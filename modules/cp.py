@@ -14,7 +14,7 @@ from ..resonance_handlers import EventListener
 # CUSTOMIZE: IMPLEMENT POLICIES BELOW                                          #
 #                                                                              #
 ################################################################################
-class IDSPolicy_T(ResonancePolicy):
+class IDSPolicyT(ResonancePolicy):
 
   def __init__(self, fsm):
     self.fsm = fsm
@@ -37,8 +37,7 @@ class IDSPolicy_T(ResonancePolicy):
 # CUSTOMIZE: IMPLEMENT STATES BELOW                                            #
 #                                                                              #
 ################################################################################
-class IDSStateMachine_T(ResonanceStateMachine): 
-
+class IDSStateMachine(ResonanceStateMachine): 
   def handleMessage(self, msg, queue):
     retval = 'ok'
     msgtype, flow, data_type, data_value = self.parse_json(msg)
@@ -53,20 +52,14 @@ class IDSStateMachine_T(ResonanceStateMachine):
       else:
           print "IDS: ignoring message type."
  
-      retval = 'ok'
-
     elif data_type == Data_Type_Map['info']:
-      retval = 'ok'
       pass
 
     elif data_type == Data_Type_Map['query']:
       state_str = self.check_state(flow)
-
       return_str = "\n*** State information in module (" + self.module_name + ") ***"
       return_str = return_str + "\n* Flow: " + str(flow)
       return_str = return_str + "\n* State: " + str(state_str) + '\n'
-
-      print return_str
 
       retval = return_str
 
@@ -79,7 +72,7 @@ class IDSStateMachine_T(ResonanceStateMachine):
 def setupStateMachineAndPolicy(name):
 
   # Create finite state machine object
-  fsm = IDSStateMachine_T(name)
+  fsm = IDSStateMachine(name)
 
   # Register switches.
   switch_list = [2,]
@@ -87,9 +80,6 @@ def setupStateMachineAndPolicy(name):
   fsm.register_switches(switch_list)
 
   # Build policy object from state machine.
-  policy_object = IDSPolicy_T(fsm)
-
-
-################### Don't Touch Below ###################
+  policy_object = IDSPolicy(fsm)
 
   return fsm, policy_object

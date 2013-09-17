@@ -103,12 +103,10 @@ class ResonanceStateMachine():
     return flows
       
   def state_transition(self, next_state, flow, queue, previous_state=None):
-
     state = self.check_state(flow) 
     if previous_state is not None:
       if state != previous_state:
         print 'Given previous state is incorrect! Do nothing.'
-        return
     else: 
 #      print "state_transition ->", str(flow), next_state
       queue.put('transition')

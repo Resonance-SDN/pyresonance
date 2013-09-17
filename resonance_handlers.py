@@ -59,10 +59,10 @@ class EventListener():
           conn.close()
           break
         json_msg = json_msg + data
-        
+        retval = 'ok'
         for fsm in self.fsms:
-          retval = fsm.handleMessage(json_msg, queue)
-          if retval != '':
-            conn.sendall(retval)
+          retval = retval + '\n' +  fsm.handleMessage(json_msg, queue)
+        if retval != '' and conn is not None:
+          conn.sendall(retval)
 
 

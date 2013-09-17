@@ -50,17 +50,19 @@ class AuthStateMachine(ResonanceStateMachine):
           self.state_transition(data_value, flow, queue)
       else:
           print "Auth: ignoring message type."
+      retval = 'ok'
 
     elif data_type == Data_Type_Map['info']:
+      retval = 'ok'
       pass
 
     elif data_type == Data_Type_Map['query']:
       state_str = self.check_state(flow)
+
       return_str = "\n*** State information in module (" + self.module_name + ") ***"
       return_str = return_str + "\n* Flow: " + str(flow)
       return_str = return_str + "\n* State: " + str(state_str) + '\n'
 
-      print return_str
       retval = return_str
 
     return retval
