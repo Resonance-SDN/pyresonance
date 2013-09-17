@@ -82,6 +82,13 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
               print str(src_dst_tuple) + ":\t" +  str(self.ip_to_modulename_map[src]) + " >> " + str(self.ip_to_modulename_map['core']) + " >> " + str(self.ip_to_modulename_map[dst])
 
   # Composing policy
+  def compose_policy_departments_switchbased():
+    final_policy = parallel([(fsm.get_match_switch() >> self.fsm_to_policyobject_map[fsm].policy()) \
+                              for fsm in self.fsm_to_policyobject_map])
+
+    return final_policy
+
+  # Composing policy
   def compose_policy_departments():
     final_policy = drop
     for m in self.policy_map:
@@ -110,7 +117,8 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
   # Updating policy
   def update_policy(pkt=None):
     if self.composition_str == '':
-      self.policy = compose_policy_departments()
+#      self.policy = compose_policy_departments()
+      self.policy = compose_policy_departments_switchbased()
     else:  
       self.policy = compose_policy()
     # Record
@@ -138,6 +146,7 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
     self.name_mod_map = name_mod_map
     self.name_po_map = {}
     self.user_fsm_list = []
+    self.fsm_to_policyobject_map = {}
     self.user_policy_object_list = []
 
     # Create queue for receiving state transition notification
@@ -147,6 +156,7 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
     for idx,name in enumerate(self.name_mod_map):
       user_fsm, user_policy_object = self.name_mod_map[name].setupStateMachineAndPolicy(name)
       self.user_fsm_list.append(user_fsm)
+      self.fsm_to_policyobject_map[user_fsm] = user_policy_object
       self.user_policy_object_list.append(user_policy_object)
       self.name_po_map[name] = user_policy_object
 
@@ -172,7 +182,7 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
 
     # Make policy map for 'auto' mode.
     # This method will return immediately if the mode is 'manual'.
-    make_policy_map()
+#    make_policy_map()
 
     # Set the policy
     self.update_policy()

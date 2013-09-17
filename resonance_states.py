@@ -24,6 +24,7 @@ class ResonanceStateMachine():
     self.flow_state_map = manager.dict()
     self.flow_state_map.clear()
     self.module_name = str(mod_name)
+    self.switch_list = []
     self.fields_list = ['dstmac', 'protocol', 'tos', 'vlan_pcp', 'srcip', \
                    'inport', 'ethtype', 'dstport', 'dstip', \
                    'srcport', 'srcmac', 'vlan_id']
@@ -141,6 +142,25 @@ class ResonanceStateMachine():
         matching_list.append(match_predicate)
 
     return parallel(matching_list)
+
+  
+  def register_switches(self,switch_list):
+    self.switch_list = []
+    for switch in switch_list:
+      if switch == 0:
+        self.switch_list = [0,]
+        break
+      self.switch_list.append(switch)
+
+
+  def get_match_switch(self):
+##    departmentA = match(switch=1) | match(switch=2) ...
+    if len(self.switch_list) == 1 and self.switch_list[0] == 0:
+      match_policy = passthrough
+    else: 
+      match_policy = parallel([(match(switch=i)) for i in self.switch_list])
+
+    return match_policy 
 
 #class AuthStateMachine(ResonanceStateMachine): 
 #

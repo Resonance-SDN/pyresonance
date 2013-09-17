@@ -40,7 +40,7 @@ class IDSPolicy_T(ResonancePolicy):
 class IDSStateMachine_T(ResonanceStateMachine): 
 
   def handleMessage(self, msg, queue):
-    retval = ''
+    retval = 'ok'
     msgtype, flow, data_type, data_value = self.parse_json(msg)
 
     if DEBUG == True:
@@ -80,6 +80,11 @@ def setupStateMachineAndPolicy(name):
 
   # Create finite state machine object
   fsm = IDSStateMachine_T(name)
+
+  # Register switches.
+  switch_list = [2,]
+#  switch_list = [0]
+  fsm.register_switches(switch_list)
 
   # Build policy object from state machine.
   policy_object = IDSPolicy_T(fsm)

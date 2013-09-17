@@ -71,6 +71,10 @@ def setupStateMachineAndPolicy(name):
   # Create finite state machine object
   fsm = AuthStateMachine(name)
 
+  # Register switches.
+  switch_list = ['all']
+  fsm.register_switches(switch_list)
+
   # Build policy object from state machine.
   policy_object = AuthPolicy(fsm)
 

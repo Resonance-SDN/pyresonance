@@ -68,7 +68,7 @@ class ServerLBPolicy(ResonancePolicy):
 ################################################################################
 class ServerLBStateMachine(ResonanceStateMachine):
   def handleMessage(self, msg, queue):
-    retval = ''
+    retval = 'ok'
     msgtype, flow, data_type, data_value = self.parse_json(msg)
 
     """ # CHECK FOR RIGHT MESSAGE TYPE, DO WHAT YOU WANT TO DO WITH MESSAGE #
@@ -116,6 +116,10 @@ def setupStateMachineAndPolicy(name):
   """ # PUT YOUR STATE MACHINE HERE # """
   """ fsm = [YOUR STATE MACHINE CLASS] """
   fsm = ServerLBStateMachine(name)
+
+  # Register switches.
+  switch_list = [3,]
+  fsm.register_switches(switch_list)
 
   # Build policy object from state machine.
   """ # PUT YOUR POLICY HERE # """

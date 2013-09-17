@@ -38,7 +38,7 @@ class AuthPolicy(ResonancePolicy):
     
 class AuthStateMachine(ResonanceStateMachine):
   def handleMessage(self, msg, queue):
-    retval = ''
+    retval = 'ok'
     msgtype, flow, data_type, data_value = self.parse_json(msg)
 
     if DEBUG == True:
@@ -70,6 +70,10 @@ def setupStateMachineAndPolicy(name):
 
   # Create finite state machine object
   fsm = AuthStateMachine(name)
+
+  # Register switches.
+  switch_list = [1,]
+  fsm.register_switches(switch_list)
 
   # Build policy object from state machine.
   policy_object = AuthPolicy(fsm)
