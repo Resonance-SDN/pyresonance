@@ -29,6 +29,7 @@ class ResonanceStateMachine():
                    'inport', 'ethtype', 'dstport', 'dstip', \
                    'srcport', 'srcmac', 'vlan_id']
     self.trigger= manager.Value('i',0)
+    self.comp = manager.Value('i',0) # sequential = 0, parallel = 1
     return
 
   def transition_callback(self, cb, arg):

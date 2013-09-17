@@ -38,8 +38,10 @@ class AuthPolicy(ResonancePolicy):
 
     else:
         #print "Auth Module is turned off"
-      return passthrough
-
+      if self.fsm.comp==0:
+        return passthrough
+      else:
+        return drop
 
 class AuthStateMachine(ResonanceStateMachine):
   def handleMessage(self, msg, queue):

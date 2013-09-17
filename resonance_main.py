@@ -103,7 +103,7 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
   # Composing policy
   def compose_policy():
     policy_str = self.composition_str
-
+    print policy_str
     # Get composition string, replace with relevant ones.
     for name in self.name_po_map:
       idx = policy_str.find(name)
@@ -144,6 +144,26 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
         #print "AG: calling the update policy"
         self.update_policy()
 
+  def update_comp(po,pname,strn):
+    temp = strn.split(' ')
+    print temp
+    ind = temp.index(pname)
+    pre=''
+    post=''
+    if ind-1>0:
+      pre=temp[ind-1]
+
+    if ind+1<len(temp):
+      post=temp[ind+1]
+
+
+    if pre =='+' or post=='+':
+      print 'parallel'
+      po.fsm.comp.value = 1
+    else:
+      print 'sequential'
+      po.fsm.comp.value = 0
+
   def initialize():
     self.composition_str = composition_str
     self.ip_to_modulename_map = ip_to_modulename_map
@@ -168,6 +188,12 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
         self.eventListener = EventListener(user_fsm)
       else:
         self.eventListener.add_fsm(user_fsm)
+    ## Adding the feature to determine the comp variable to determine action for the module while turning it off
+    for pname in self.name_po_map.keys():
+      po = self.name_po_map[pname]
+      print pname
+      print po.fsm.trigger.value
+      update_comp(po,pname, self.composition_str)
 
     # Make main event listener. For querying states.
 #    main_fsm = ResonanceStateMachine()
