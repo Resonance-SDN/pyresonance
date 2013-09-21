@@ -9,7 +9,7 @@ from ..resonance_policy import *
 from ..resonance_states import *
 from ..resonance_eventTypes import *
 from ..resonance_handlers import EventListener
-
+from ..resonance_globals import *
 ################################################################################
 # CUSTOMIZE: IMPLEMENT POLICIES BELOW                                          #
 #                                                                              #
@@ -18,7 +18,7 @@ class IDSPolicy(ResonancePolicy):
 
   def __init__(self, fsm):
     self.fsm = fsm
- 
+
   def allow_policy(self):
     return passthrough
 
@@ -30,20 +30,20 @@ class IDSPolicy(ResonancePolicy):
     # Create state policies for each state
     p1 =  if_(match_clean_flows,self.allow_policy(), drop)
 
-    # Parallel compositon 
+    # Parallel compositon
     return p1
 
 ################################################################################
 # CUSTOMIZE: IMPLEMENT STATES BELOW                                            #
 #                                                                              #
 ################################################################################
-class IDSStateMachine(ResonanceStateMachine): 
+class IDSStateMachine(ResonanceStateMachine):
   def handleMessage(self, msg, queue):
     retval = 'ok'
     msgtype, flow, data_type, data_value = self.parse_json(msg)
 
     if DEBUG == True:
-      print "IDS HANDLE: ", flow 
+      print "IDS HANDLE: ", flow
 
     if data_type == Data_Type_Map['state']:
       # in the subclass, we type check the message type
@@ -51,7 +51,7 @@ class IDSStateMachine(ResonanceStateMachine):
           self.state_transition(data_value, flow, queue)
       else:
           print "IDS: ignoring message type."
- 
+
     elif data_type == Data_Type_Map['info']:
       pass
 
@@ -75,8 +75,9 @@ def setupStateMachineAndPolicy(name):
   fsm = IDSStateMachine(name)
 
   # Register switches.
-  switch_list = [2,]
-#  switch_list = [0]
+  #switch_list = [2,]
+  switch_list = d2S_map['cp']
+  #print switch_list
   fsm.register_switches(switch_list)
 
   # Build policy object from state machine.

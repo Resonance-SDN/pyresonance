@@ -9,10 +9,11 @@ from ..resonance_policy import *
 from ..resonance_states import *
 from ..resonance_eventTypes import *
 from ..resonance_handlers import EventListener
+from ..resonance_globals import *
 from pyretic.examples.load_balancer import *
 
 ################################################################################
-# Mininet command to give                                                      
+# Mininet command to give
 # $ sudo mn --controller=remote,ip=127.0.0.1 --custom example_topos.py --topo linear
 #
 ################################################################################
@@ -32,17 +33,17 @@ class AuthPolicy(ResonancePolicy):
     # Create state policies for each state
     p1 =  if_(match_auth_flows,self.allow_policy(), drop)
 
-    # Parallel compositon 
+    # Parallel compositon
     return p1
 
-    
+
 class AuthStateMachine(ResonanceStateMachine):
   def handleMessage(self, msg, queue):
     retval = 'ok'
     msgtype, flow, data_type, data_value = self.parse_json(msg)
 
     if DEBUG == True:
-      print "AUTH HANDLE: ", flow 
+      print "AUTH HANDLE: ", flow
 
     if data_type == Data_Type_Map['state']:
       # in the subclass, we type check the message type
@@ -58,7 +59,6 @@ class AuthStateMachine(ResonanceStateMachine):
 
     elif data_type == Data_Type_Map['query']:
       state_str = self.check_state(flow)
-
       return_str = "\n*** State information in module (" + self.module_name + ") ***"
       return_str = return_str + "\n* Flow: " + str(flow)
       return_str = return_str + "\n* State: " + str(state_str) + '\n'
@@ -74,7 +74,12 @@ def setupStateMachineAndPolicy(name):
   fsm = AuthStateMachine(name)
 
   # Register switches.
-  switch_list = [1,]
+  # Original way of getting switch list
+  #switch_list = [1,]
+  # AG: get switch list from global D2S dictionary
+  #print d2S_map
+  switch_list = d2S_map['dp1']
+  #print switch_list
   fsm.register_switches(switch_list)
 
   # Build policy object from state machine.

@@ -42,6 +42,8 @@ from pyretic.modules.mac_learner import learn
 from resonance_policy import *
 from resonance_states import *
 from resonance_handlers import EventListener
+from resonance_globals import *
+
 from multiprocessing import Process, Queue
 from importlib import import_module
 import time
@@ -50,6 +52,8 @@ import threading
 import os
 import sys
 import re
+
+from resonance_globals import *
 
 DEBUG = True
 
@@ -119,6 +123,7 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
   # Updating policy
   def update_policy(pkt=None):
     #print "comp str: "+self.composition_str
+
     if self.composition_str == '':
 #      self.policy = compose_policy_departments()
       self.policy = compose_policy_departments_switchbased()
@@ -126,7 +131,7 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
       self.policy = compose_policy()
     # Record
     ts = time.time()
-    subprocess.call("echo %.7f >> /home/mininet/hyojoon/benchmark/pyresonance-benchmark/event_test/output/process_time/of.txt"%(ts), shell=True)
+    #subprocess.call("echo %.7f >> /home/mininet/hyojoon/benchmark/pyresonance-benchmark/event_test/output/process_time/of.txt"%(ts), shell=True)
 
 #    print self.policy
 
@@ -143,6 +148,42 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
       else: # Got line.
         #print "AG: calling the update policy"
         self.update_policy()
+
+  def update_d2s():
+   #print "updating the 'reso_auto.config' file"
+    fi='./pyretic/pyresonance/reso_auto.config'
+    fo='./pyretic/pyresonance/reso_auto.config_new'
+    fin = open(fi,'r')
+    fout = open(fo,'w+')
+    flag=0
+    for line in fin.readlines():
+      if line.startswith('D2S'):
+        flag=1
+        fout.write(line)
+      elif flag==1:
+        if line.startswith('}'):
+          flag=0
+          fout.write(line)
+        else:
+          if len(line.split(':'))==2:
+            dep=line.split(':')[0].strip(' ')
+            newline=dep+':'
+            for sw in d2S_map[dep]:
+              newline+=sw+','
+            fout.write(newline+'\n')
+      else:
+        fout.write(line)
+    os.system('mv '+fo+' fi')
+    #os.system('rm '+fo)
+
+  def synch_d2s():
+    #print 'd2s thread started'
+    while True:
+      update_d2s()
+      time.sleep(60) # synch the config file every 1 minute
+
+
+
 
   def update_comp(po,pname,strn):
     temp = strn.split(' ')
@@ -193,7 +234,7 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
       po = self.name_po_map[pname]
       #print pname
       #print po.fsm.trigger.value
-      update_comp(po,pname, self.composition_str)
+      #update_comp(po,pname, self.composition_str)
 
     # Make main event listener. For querying states.
 #    main_fsm = ResonanceStateMachine()
@@ -217,6 +258,13 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
     # Set the policy
     self.update_policy()
 
+    # Start the thread to update the D2S mapping information
+
+    t_d2s = threading.Thread(target=synch_d2s)
+    t_d2s.daemon = True
+    t_d2s.start()
+
+
   initialize()
 
 
@@ -232,7 +280,7 @@ def parse_config_file(content, mode, repeat):
     ### TEST
     if repeat != 0:
       modules_list = [modules_list[0]]*int(repeat)
-    ### TEST  
+    ### TEST
 
     print '\n*** Specified Modules are: ***'
     for m in modules_list:
@@ -250,6 +298,27 @@ def parse_config_file(content, mode, repeat):
 
   if mode.__eq__('auto'):
     # Get Departments
+    print "Auto Mode"
+    d2s={}
+    match = re.search('D2S = \{(.*)\}\n+DEPARTMENTS = \{', content, flags=re.DOTALL)
+    #print match
+    if match:
+      ilist = match.group(1).split('\n')
+      for item in ilist:
+        if item!='':
+          item = item.strip(' ')
+          dep = item.split(':')[0]
+
+          d2S_map[dep]=[]
+          switchlist = item.split(':')[1].split(',')
+          for sw in switchlist:
+            if sw !='':
+              d2S_map[dep].append(sw.strip(' '))
+
+          #print dep
+      #print d2S_map
+
+
     match = re.search('DEPARTMENTS = \{(.*)\}',content, flags=re.DOTALL)
     if match:
       policy_list = match.group(1).split('\n')
@@ -267,10 +336,14 @@ def parse_config_file(content, mode, repeat):
       composition_str = 'passthrough >> ' *int(repeat)
       composition_str = composition_str.rstrip(' >> ')
       print '\n\n*** The Policy Composition is: ***\n' + composition_str + '\n'
-    ### TEST  
+    ### TEST
 
-    else:    
+    else:
       # Get Composition.
+      #match = re.search('D2S = \{.*}\}', content, flags=re.DOTALL)
+      #if match:
+      #  print match.group(1)
+
       match = re.search('COMPOSITION = \{(.*)\}',content, flags=re.DOTALL)
       if match:
         compose_list = match.group(1).split('\n')
@@ -288,6 +361,7 @@ def parse_config_file(content, mode, repeat):
 """ Main Method """
 def main(config, mode, modrepeat=None):
   # Open configuration file.
+  print config
   try:
     fd = open(config, 'r')
   except IOError as ex:
