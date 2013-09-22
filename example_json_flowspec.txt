@@ -1,1 +1,0 @@
-{inport=1, srcmac=00:00:00:00:00:11, dstmac=00:00:00:00:00:01,srcip=10.0.0.1, dstip=10.0.0.2/24, tos=2,srcport=90, dstport=8080, ethtype=1, protocol=2048, vlan_id=43, vlan_pcp=1}
