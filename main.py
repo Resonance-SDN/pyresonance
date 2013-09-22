@@ -87,7 +87,8 @@ def resonance(self, app_to_module_map, app_composition_str):
         # Record
         ts = time.time()
         subprocess.call("echo %.7f >> /home/mininet/hyojoon/benchmark/pyresonance-benchmark/event_test/output/process_time/of.txt"%(ts), shell=True)
-        # print self.policy
+
+        print self.policy
 
     self.update_policy = update_policy
 
@@ -102,20 +103,27 @@ def resonance(self, app_to_module_map, app_composition_str):
                 self.update_policy()
 
     def update_comp(po,pname,strn):
-        temp = strn.split(' ')
-        ind = temp.index(pname)
-        pre=''
-        post=''
-        if ind-1>0:
-            pre=temp[ind-1]
-
-        if ind+1<len(temp):
-            post=temp[ind+1]
-
-        if pre =='+' or post=='+':
-            po.fsm.comp.value = 1
-        else:
+        if strn == '': # probably auto mode.
             po.fsm.comp.value = 0
+
+        else:
+            temp = strn.split(' ')
+            if temp.count(pname) > 0:
+                ind = temp.index(pname)
+                pre=''
+                post=''
+                if ind-1>0:
+                    pre=temp[ind-1]
+      
+                if ind+1<len(temp):
+                    post=temp[ind+1]
+      
+                if pre =='+' or post=='+':
+                    po.fsm.comp.value = 1
+                else:
+                    po.fsm.comp.value = 0
+            else:
+              pass
 
     def initialize():
         self.app_composition_str = app_composition_str

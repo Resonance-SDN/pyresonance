@@ -38,6 +38,8 @@ class IDSFSM(BaseFSM):
                 return_str = return_str + "\n* State: " + str(state_str) + '\n'
                 print return_str
                 return_value = return_str
+            elif message['message_type'] == MESSAGE_TYPES['trigger']:
+                self.trigger_module_off(message['message_value'], queue)
         else:
             print "IDS: ignoring message type."
             
