@@ -220,7 +220,7 @@ def resonance(self, name_mod_map, composition_str, ip_to_modulename_map):
   initialize()
 
 
-def parse_config_file(content, mode):
+def parse_config_file(content, mode, repeat):
   name_mod_map = {}           # {shortname : module_object} dictionary
   composition_str = ''        # Policy composition in string format (in manual mode)
   ip_to_modulename_map = {}   # {ip_address : shortname} dictionary
@@ -229,6 +229,11 @@ def parse_config_file(content, mode):
   match = re.search('MODULES = \{(.*)\}\n+COMPOSITION = \{',content, flags=re.DOTALL)
   if match:
     modules_list = match.group(1).split(',')
+    ### TEST
+    if repeat != 0:
+      modules_list = [modules_list[0]]*int(repeat)
+    ### TEST  
+
     print '\n*** Specified Modules are: ***'
     for m in modules_list:
       corrected_m = m.strip('\n').strip()
@@ -257,15 +262,23 @@ def parse_config_file(content, mode):
 #    return name_mod_map, '', ip_to_modulename_map
 
   elif mode.__eq__('manual'):
-    # Get Composition.
-    match = re.search('COMPOSITION = \{(.*)\}',content, flags=re.DOTALL)
-    if match:
-      compose_list = match.group(1).split('\n')
-      for compose in compose_list:
-        composition_str = compose.strip('\n').strip()
-        if composition_str != '' and composition_str.startswith('#') is False:
-          print '\n\n*** The Policy Composition is: ***\n' + composition_str + '\n'
-          break
+    ### TEST
+    if repeat != 0:
+      composition_str = 'passthrough >> ' *int(repeat)
+      composition_str = composition_str.rstrip(' >> ')
+      print '\n\n*** The Policy Composition is: ***\n' + composition_str + '\n'
+    ### TEST  
+
+    else:    
+      # Get Composition.
+      match = re.search('COMPOSITION = \{(.*)\}',content, flags=re.DOTALL)
+      if match:
+        compose_list = match.group(1).split('\n')
+        for compose in compose_list:
+          composition_str = compose.strip('\n').strip()
+          if composition_str != '' and composition_str.startswith('#') is False:
+            print '\n\n*** The Policy Composition is: ***\n' + composition_str + '\n'
+            break
 
 
   # Return
@@ -273,7 +286,7 @@ def parse_config_file(content, mode):
 
 
 """ Main Method """
-def main(config, mode):
+def main(config, mode, modrepeat=None):
   # Open configuration file.
   try:
     fd = open(config, 'r')
@@ -286,12 +299,18 @@ def main(config, mode):
     print 'Wrong mode value. Exit'
     sys.exit(1)
 
+  # check test mode.
+  repeat = 0
+  if modrepeat is not None:
+    if modrepeat != 0:
+      repeat = modrepeat
+
   # Read config file
   content = fd.read()
   fd.close()
 
   # Parse configuration file.
-  name_mod_map, composition_str, ip_to_modulename_map  = parse_config_file(content, mode)
+  name_mod_map, composition_str, ip_to_modulename_map  = parse_config_file(content, mode, repeat)
 
   if len(name_mod_map) == 0:
     print 'Config file seems incorrect. Exiting.'
