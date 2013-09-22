@@ -18,7 +18,7 @@ from ..globals import *
 HOST = 'localhost'
 PORT = 8008
 
-class DDoSFSM_T(BaseFSM_T):
+class DDoSFSM(BaseFSM):
     
     def default_handler(self, message, queue):
         return_value = 'ok'
@@ -44,7 +44,7 @@ class DDoSFSM_T(BaseFSM_T):
         return return_value
     
     
-class DDoSPolicy_T(BasePolicy_T):
+class DDoSPolicy(BasePolicy):
     
     def __init__(self, fsm):
         self.fsm = fsm
@@ -65,10 +65,10 @@ class DDoSPolicy_T(BasePolicy_T):
 def main(queue):
     
     # Create FSM object
-    fsm = DDoSFSM_T()
+    fsm = DDoSFSM()
     
     # Create policy using state machine
-    policy = DDoSPolicy_T(fsm)
+    policy = DDoSPolicy(fsm)
     
     # Create an event source (i.e., SFlow)
     sflow_event = SFlowEvent_T(fsm.default_handler, HOST, PORT)

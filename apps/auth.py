@@ -24,7 +24,7 @@ def main(queue):
     policy = AuthPolicy_T(fsm)
     
     # Create an event source (i.e., JSON)
-    json_event = JSONEvent_T(fsm.default_handler, HOST, PORT)
+    json_event = JSONEvent(fsm.default_handler, HOST, PORT)
     json_event.start(queue)
     
     return fsm, policy

@@ -16,7 +16,7 @@ STD_FLOW_FIELDS = ['dstmac', 'protocol', 'tos', 'vlan_pcp', 'srcip', \
                     'srcport', 'srcmac', 'vlan_id']
 
 # Message Types
-MESSAGE_TYPES = {'state':'state', 'info':'info', 'query':'query'}
+MESSAGE_TYPES = {'state':'state', 'info':'info', 'query':'query', 'trigger':'trigger'}
 
 # Event Types
 EVENT_TYPES = {'auth':'auth', 'ids':'ids', 'ddos':'ddos'}

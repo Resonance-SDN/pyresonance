@@ -11,7 +11,7 @@ from pyretic.lib.std import *
 
 from base_policy import *
 
-class AuthPolicy_T(BasePolicy_T):
+class AuthPolicy_T(BasePolicy):
     
     def __init__(self, fsm):
         self.fsm = fsm

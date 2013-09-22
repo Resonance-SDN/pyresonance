@@ -14,13 +14,15 @@ from multiprocessing import Process, Manager
 
 from ..globals import *
 
-class BaseFSM_T():
+class BaseFSM():
     
     def __init__(self):
         manager = Manager()
         
         self.flow_to_state_map = manager.dict()
         self.flow_to_state_map.clear()
+        self.trigger = manager.Value('i', 0)
+        self.comp = manager.Value('i', 0) # sequential = 0, parallel = 1 
         
 #     def transition_callback(self, cb, arg):
 #         self.cb = cb

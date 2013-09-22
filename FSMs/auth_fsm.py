@@ -11,7 +11,7 @@ from ..FSMs.base_fsm import *
 
 from ..globals import *
 
-class AuthFSM_T(BaseFSM_T):
+class AuthFSM_T(BaseFSM):
     
     def default_handler(self, message, queue):
         return_value = 'ok'
@@ -31,6 +31,8 @@ class AuthFSM_T(BaseFSM_T):
                 return_str = return_str + "\n* State: " + str(state_str) + '\n'
                 print return_str
                 return_value = return_str
+            elif message['message_type'] == MESSAGE_TYPES['trigger']:
+                self.trigger_module_off(message['message_value'],queue)
         else:
             print "Auth: ignoring message type."
             

@@ -11,7 +11,7 @@ import socket
 import SocketServer
 import json
 
-class JSONEvent_T():
+class JSONEvent():
     
     def __init__(self, handler, addr, port):
         self.handler = handler

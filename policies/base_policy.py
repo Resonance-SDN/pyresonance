@@ -9,7 +9,7 @@
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
-class BasePolicy_T():
+class BasePolicy():
     
     state_to_policy_map = {}
     
