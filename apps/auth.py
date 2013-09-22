@@ -1,3 +1,10 @@
+################################################################################
+# Resonance Project                                                            #
+# Resonance implemented with Pyretic platform                                  #
+# author: Hyojoon Kim (joonk@gatech.edu)                                       #
+# author: Nick Feamster (feamster@cc.gatech.edu)                               #
+# author: Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)                       #
+################################################################################
 
 from ..policies.auth_policy import *
 from ..FSMs.auth_fsm import *

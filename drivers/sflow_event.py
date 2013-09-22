@@ -1,3 +1,8 @@
+################################################################################
+# Resonance Project                                                            #
+# Resonance implemented with Pyretic platform                                  #
+# author: Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)                       #
+################################################################################
 
 import threading
 from socket import *
