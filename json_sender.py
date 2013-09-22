@@ -5,6 +5,7 @@
 # Resonance implemented with Pyretic platform                                  #
 # author: Hyojoon Kim (joonk@gatech.edu)                                       #
 # author: Nick Feamster (feamster@cc.gatech.edu)                               #
+# author: Arpit Gupta (glex.qsd@gmail.com)                                     #
 # author: Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)                       #
 ################################################################################
 
@@ -41,6 +42,9 @@ def main():
  
     op.add_option( '--event-query', '-q', action="store",  \
                      dest="event_query", help = 'Query the state information for this flow.' )
+
+    op.add_option( '--event-trigger', '-t', action="store", \
+                     dest="event_trigger", help = 'Trigger to turn the module ON/OFF' )
     
     op.add_option( '--addr', '-a', action="store",\
                      dest="addr", help = 'The address of the controller.' )
@@ -79,8 +83,9 @@ def main():
     elif options.flow_tuple:
         flow = options.flow_tuple
     else:
-        print 'No flow specification or any file given. Exiting.'
-        return
+        if options.event_trigger is None:
+            print 'No flow or trigger given. Exit.'
+            return 
 
     # Parse flow
     parse_flow(message_payload, flow)
@@ -98,6 +103,11 @@ def main():
     elif options.event_state is not None:
         message_value = options.event_state
         message_type = MESSAGE_TYPES['state']
+
+    elif options.event_trigger is not None:
+        message_value = options.event_trigger
+        message_type = MESSAGE_TYPES['trigger'] 
+
     elif options.event_info is not None:
         try:
             fd = open(options.event_info, 'r')
