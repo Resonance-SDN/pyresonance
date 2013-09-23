@@ -58,6 +58,21 @@ class BaseFSM():
 
         return flows
 
+    def trigger_module_off(self,trigger_val,queue):
+        print "trigger_module_off called, trigger: "+str(self.trigger)+" trigger_val: "+str(trigger_val)
+        if self.trigger.value==1 and int(trigger_val)==1:
+            print "Module already turned off. No action required"
+        elif self.trigger.value==0 and int(trigger_val)==0:
+            print "Module already turned on. No action required"
+        else:
+            if int(trigger_val)==1:
+                print "Turning the module off"
+            elif int(trigger_val)==0:
+                print "Turning the module on"
+#            print "new trigger value: "+str(self.trigger.value)
+            self.trigger.value = int(trigger_val)
+            queue.put('transition')
+
     def get_policy(self, state):
         
         matching_list = []

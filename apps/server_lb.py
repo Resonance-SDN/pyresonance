@@ -95,17 +95,24 @@ class ServerLBPolicy(BasePolicy):
     return drop
 
   def policy(self):
-    # Match incoming flow with each state's flows
-    match_serverA_flows = self.fsm.get_policy('sa')
-    match_serverB_flows = self.fsm.get_policy('sb')
 
-    # Create state policies for each state
-    p1 =  if_(match_serverA_flows,self.serverA_policy(), self.default_policy())
-    p2 =  if_(match_serverB_flows,self.serverB_policy(), self.default_policy())
+    if self.fsm.trigger.value == 0:
+      # Match incoming flow with each state's flows
+      match_serverA_flows = self.fsm.get_policy('sa')
+      match_serverB_flows = self.fsm.get_policy('sb')
 
-    # Parallel compositon 
-    return p1 + p2
+      # Create state policies for each state
+      p1 =  if_(match_serverA_flows,self.serverA_policy(), self.default_policy())
+      p2 =  if_(match_serverB_flows,self.serverB_policy(), self.default_policy())
 
+      # Parallel compositon 
+      return p1 + p2
+
+    else:
+      if self.fsm.comp.value == 0:
+        return passthrough
+      else:
+        return drop
 
 def main(queue):
 

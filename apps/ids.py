@@ -55,14 +55,21 @@ class IDSPolicy(BasePolicy):
         return passthrough
     
     def policy(self):
-        # Match incoming flow with each state's flows
-        match_clean_flows = self.fsm.get_policy('clean')
+        if self.fsm.trigger.value == 0:
+            # Match incoming flow with each state's flows
+            match_clean_flows = self.fsm.get_policy('clean')
 
-        # Create state policies for each state
-        p1 = if_(match_clean_flows, self.allow_policy(), drop)
+            # Create state policies for each state
+            p1 = if_(match_clean_flows, self.allow_policy(), drop)
 
-        # Parallel composition 
-        return p1
+            # Parallel composition 
+            return p1
+
+        else:
+            if self.fsm.comp.value == 0:
+                return passthrough
+            else:
+                return drop
 
 def main(queue):
     
