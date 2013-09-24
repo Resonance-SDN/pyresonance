@@ -9,7 +9,6 @@ def getlines(dirs):
     n = 0
     ln=0
     ifile = open(dirs,'r')
-    #print dirs
     flag = 0
     for line in ifile.readlines():
         ln+=1
@@ -17,35 +16,23 @@ def getlines(dirs):
             line = line.strip(' ')
             if line.startswith('#') or line =='\n' or line.startswith('"""'):
                 if line.startswith('"""'):
-                    #print 'for: '+dirs+', start mark found: '+str(ln)
-                    if line.count('"""')==2:
-                        a=1
-                        #print 'end mark found: '+str(ln)
-                    else:
+                    if line.count('"""')!=2:
                         flag=1
-                        continue
+                        #continue
             else:
-                #if 'dp1.py' in dirs:
-                #    print line
                 n+=1
-        if flag == 1:
+        else:
             if '"""' in line:
-                #print 'end mark found: '+str(ln)
                 flag=0
 
     return n
 
 fdir_prev=''
 for r,d,f in os.walk(os.getcwd()):
-    #print r
-    #print d
-    #print f
     for files in f:
         if files.endswith('.py'):
             dirs = os.path.join(r,files)
             fdir = dirs.split(files)[0]
-            #print fdir
-            #print files
             if fdir!=fdir_prev:
                 ofile.write('\n\n## Dir: '+fdir+'\n')
             else:
