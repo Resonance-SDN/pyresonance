@@ -32,13 +32,14 @@ fdir_prev=''
 for r,d,f in os.walk(os.getcwd()):
     for files in f:
         if files.endswith('.py'):
+            print files
             dirs = os.path.join(r,files)
             fdir = dirs.split(files)[0]
             if fdir!=fdir_prev:
                 ofile.write('\n\n## Dir: '+fdir+'\n')
-            else:
-                n_line = getlines(dirs)
-                ofile.write(files+': '+str(n_line)+'\n')
+
+            n_line = getlines(dirs)
+            ofile.write(files+': '+str(n_line)+'\n')
 
 
             fdir_prev= fdir
