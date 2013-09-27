@@ -32,7 +32,7 @@ def main():
                      dest="file", help = 'File containing the flow tuple information. It should follow the format of the flow as above i.e., starts with {..' )
 
     op.add_option( '--event-type', '-e', type='choice', dest="event_type",\
-                     choices=['auth','ids', 'serverlb'], help = '|'.join( ['auth','ids','serverlb'] )  )
+                     choices=['auth','ids', 'serverlb', 'ratelimit'], help = '|'.join( ['auth','ids','serverlb', 'ratelimit'] )  )
 
     op.add_option( '--event-state', '-s', action="store",\
                      dest="event_state", help = 'The state value for this flow.'  )

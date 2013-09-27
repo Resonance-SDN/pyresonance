@@ -19,4 +19,4 @@ STD_FLOW_FIELDS = ['dstmac', 'protocol', 'tos', 'vlan_pcp', 'srcip', \
 MESSAGE_TYPES = {'state':'state', 'info':'info', 'query':'query', 'trigger':'trigger'}
 
 # Event Types
-EVENT_TYPES = {'auth':'auth', 'ids':'ids', 'ddos':'ddos', 'serverlb':'serverlb'}
+EVENT_TYPES = {'auth':'auth', 'ids':'ids', 'ddos':'ddos', 'serverlb':'serverlb', 'ratelimit':'ratelimit'}
