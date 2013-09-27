@@ -28,7 +28,7 @@ class BaseFSM():
 #         self.cb = cb
 #         self.cbarg = arg
     def debug_handler(self, message, queue):
-        return_str = ''
+        return_str = 'ok'
         if message['message_type'] == MESSAGE_TYPES['query']:
             state_str = self.get_state(message['flow'])
             return_str = "\n*** State information in module () ***"
@@ -132,9 +132,4 @@ class BaseFSM():
             if DEBUG == True:
                 print "Current States: ", self.flow_to_state_map
     
-    def turn_off_module(self, f):
-        if f.comp.value == 0:
-            return passthrough
-        else:
-            return drop
 

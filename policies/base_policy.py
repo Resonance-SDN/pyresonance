@@ -26,4 +26,9 @@ class BasePolicy():
             return self.default_policy
     
 
-        
+    def turn_off_module(self, value):
+        if value == 0:
+            return passthrough
+        else:
+            return drop
+

@@ -84,7 +84,7 @@ class IDSPolicy(BasePolicy):
             return p1 + p2
 
         else:
-            return self.turn_off_module(self.fsm)
+            return self.turn_off_module(self.fsm.comp.value)
 
 def main(queue):
     
