@@ -94,7 +94,7 @@ class ServerLBPolicy(BasePolicy):
   def default_policy(self):
     return drop
 
-  def policy(self):
+  def action(self):
 
     if self.fsm.trigger.value == 0:
       # Match incoming flow with each state's flows

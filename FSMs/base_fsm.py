@@ -89,20 +89,19 @@ class BaseFSM():
                         match_str = match_str + ','
                     
                     if field.endswith('mac') is True:
-                        match_str = match_str + field + "=MAC('" + str(flow_map[field]) + "')"
+                        match_str = match_str + field + "=EthAddr('" + str(flow_map[field]) + "')"
                     elif field.endswith('ip') is True:
-                        match_str = match_str + field + "='" + str(flow_map[field]) + "'"
+                        match_str = match_str + field + "=IPAddr('" + str(flow_map[field]) + "')"
                     else:
                         match_str = match_str + field + '=' + str(flow_map[field])
 
             match_str = match_str + ')'
-            print match_str
-            
             match_predicate = eval(match_str)
+
             if match_str.__eq__('match()') is False:
                 matching_list.append(match_predicate)
 
-        return parallel(matching_list)
+        return union(matching_list)
 
     def state_transition(self, next_state, flow, queue, previous_state=None):
         

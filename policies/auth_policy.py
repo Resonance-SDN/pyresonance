@@ -19,12 +19,20 @@ class AuthPolicy_T(BasePolicy):
     def allow_policy(self):
         return passthrough
     
-    def policy(self):
-        # Match incoming flow with each state's flows
-        match_auth_flows = self.fsm.get_policy('authenticated')
-        
-        # Create state policies for each state
-        p1 = if_(match_auth_flows, self.allow_policy(), drop)
+    def action(self):
+        if self.fsm.trigger.value == 0:
+            # Match incoming flow with each state's flows
+            match_auth_flows = self.fsm.get_policy('authenticated')
+            
+            # Create state policies for each state
+            p1 = if_(match_auth_flows, self.allow_policy(), drop)
+    
+            # Parallel composition 
+            return p1
+        else:
+            if self.fsm.comp.value == 0:
+                return passthrough
+            else:
+                return drop
 
-        # Parallel composition 
-        return p1
+

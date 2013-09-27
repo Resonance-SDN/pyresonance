@@ -15,6 +15,28 @@ from ..globals import *
 HOST = '127.0.0.1'
 PORT = 50001
 
+################################################################################
+# Run Mininet:
+# $ sudo mn --controller=remote,ip=127.0.0.1 --custom mininet_topos/example_topos.py
+#           --topo linear --link=tc --mac --arp
+################################################################################
+
+################################################################################
+# Start ping from 10.0.0.1 to 10.0.0.2
+#   mininet> h1 ping h2
+################################################################################
+
+################################################################################
+# 1. To authenticate 10.0.0.1
+#  $ python json_sender.py --flow='{srcip=10.0.0.1}' -e auth -s authenticated -a 127.0.0.1 -p 50001
+#  $ python json_sender.py --flow='{dstip=10.0.0.1}' -e auth -s authenticated -a 127.0.0.1 -p 50001
+#
+# 2. To authenticate 10.0.0.2
+#  $ python json_sender.py --flow='{srcip=10.0.0.2}' -e auth -s authenticated -a 127.0.0.1 -p 50001
+#  $ python json_sender.py --flow='{dstip=10.0.0.2}' -e auth -s authenticated -a 127.0.0.1 -p 50001
+################################################################################
+
+
 def main(queue):
     
     # Create FSM object

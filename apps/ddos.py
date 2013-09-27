@@ -52,7 +52,7 @@ class DDoSPolicy(BasePolicy):
     def allow_policy(self):
         return passthrough
     
-    def policy(self):
+    def action(self):
         # Match incoming flow with each state's flows
         match_denied_flows = self.fsm.get_policy('denied')
 

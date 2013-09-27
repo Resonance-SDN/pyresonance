@@ -39,7 +39,8 @@
 
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
-from pyretic.modules.mac_learner import learn
+from pyretic.lib.query import *
+from pyretic.modules.mac_learner import mac_learner
 
 from .globals import *
 
@@ -52,80 +53,10 @@ import sys
 import re
 
 # Dynamic resonance policy ######
-def resonance(self, app_to_module_map, app_composition_str):
-
-    # Composing department policies, switch-based
-    def compose_policy_departments_switchbased():
-        final_policy = parallel([(fsm.get_match_switch() >> self.fsm_to_policy_map[fsm].policy()) \
-                            for fsm in self.fsm_to_policy_map])
-
-        return final_policy
-    
-    # Composing policy
-    def compose_policy():
-        policy = drop
-        policy_str = self.app_composition_str
-        
-        # Get composition string, replace with relevant ones.
-        for app in self.app_to_policy_map:
-            id = policy_str.find(app)
-            
-            if id != -1:
-                if self.app_to_policy_map[app] in self.user_policy_list:
-                    policy_index = self.user_policy_list.index(self.app_to_policy_map[app])
-                    replace_str = 'self.user_policy_list[' + str(policy_index) + '].policy()'
-                    policy_str = policy_str.replace(app, replace_str)
-                    
-        return eval(policy_str)
-
-    # Updating policy
-    def update_policy(pkt=None):
-        if self.app_composition_str == '':
-            self.policy = compose_policy_departments_switchbased()
-        else:
-            self.policy = compose_policy()
-        # Record
-        ts = time.time()
-        subprocess.call("echo %.7f >> /home/mininet/hyojoon/benchmark/pyresonance-benchmark/event_test/output/process_time/of.txt"%(ts), shell=True)
-
-        print self.policy
-
-    self.update_policy = update_policy
-
-    # Listen for state transitions.
-    def transition_signal_catcher(queue):
-        while 1:
-            try:  
-                line = queue.get(timeout=.1)
-            except:
-                continue
-            else: # Got line 
-                self.update_policy()
-
-    def update_comp(po,pname,strn):
-        if strn == '': # probably auto mode.
-            po.fsm.comp.value = 0
-
-        else:
-            temp = strn.split(' ')
-            if temp.count(pname) > 0:
-                ind = temp.index(pname)
-                pre=''
-                post=''
-                if ind-1>0:
-                    pre=temp[ind-1]
-      
-                if ind+1<len(temp):
-                    post=temp[ind+1]
-      
-                if pre =='+' or post=='+':
-                    po.fsm.comp.value = 1
-                else:
-                    po.fsm.comp.value = 0
-            else:
-              pass
-
-    def initialize():
+#def resonance(self, app_to_module_map, app_composition_str):
+class resonance(DynamicPolicy):
+    def __init__(self, app_to_module_map, app_composition_str):
+        super(resonance,self).__init__()
         self.app_composition_str = app_composition_str
         self.app_to_module_map = app_to_module_map
         self.app_to_policy_map = {}
@@ -148,17 +79,91 @@ def resonance(self, app_to_module_map, app_composition_str):
         ##  to determine action for the module while turning it off
         for pname in self.app_to_policy_map.keys():
             po = self.app_to_policy_map[pname]
-            update_comp(po,pname, self.app_composition_str)
+            self.update_comp(po,pname, self.app_composition_str)
 
         # Start signal catcher thread
-        t1 = threading.Thread(target=transition_signal_catcher, args=(queue,))
+        t1 = threading.Thread(target=self.transition_signal_catcher, args=(queue,))
         t1.daemon = True
         t1.start()
     
         # Set the policy
         self.update_policy()
+
+    # Composing department policies, switch-based
+    def compose_policy_departments_switchbased(self):
+        final_policy = parallel([(fsm.get_match_switch() >> self.fsm_to_policy_map[fsm].action()) \
+                            for fsm in self.fsm_to_policy_map])
+
+        return final_policy
+    
+    # Composing policy
+    def compose_policy(self):
+        policy = drop
+        policy_str = self.app_composition_str
         
-    initialize()
+        # Get composition string, replace with relevant ones.
+        for app in self.app_to_policy_map:
+            id = policy_str.find(app)
+            
+            if id != -1:
+                if self.app_to_policy_map[app] in self.user_policy_list:
+                    policy_index = self.user_policy_list.index(self.app_to_policy_map[app])
+                    replace_str = 'self.user_policy_list[' + str(policy_index) + '].action()'
+                    policy_str = policy_str.replace(app, replace_str)
+             
+#        print 'Raw string: ' + policy_str
+#        print 'Evaluated: \n' + str(eval(policy_str))
+        return eval(policy_str)
+
+    # Updating policy
+    def update_policy(self):
+        if self.app_composition_str == '':
+            self.policy = self.compose_policy_departments_switchbased()
+        else:
+#            self.policy = self.compose_policy() + if_(match(ethtype=2054), passthrough, drop)
+            self.policy = self.compose_policy()
+#            self.policy = union([if_(match(srcip='10.0.0.1'), passthrough,drop), if_(match(srcip='10.0.0.2'), passthrough,drop)])
+        # Record
+        ts = time.time()
+        subprocess.call("echo %.7f >> /home/mininet/hyojoon/benchmark/pyresonance-benchmark/event_test/output/process_time/of.txt"%(ts), shell=True)
+
+#        print 'Policy:'
+#        print self.policy
+
+
+    # Listen for state transitions.
+    def transition_signal_catcher(self,queue):
+        while 1:
+            try:  
+                line = queue.get(timeout=.1)
+            except:
+                continue
+            else: # Got line 
+                self.update_policy()
+
+    def update_comp(self, po,pname,strn):
+        if strn == '': # probably auto mode.
+            po.fsm.comp.value = 0
+
+        else:
+            temp = strn.split(' ')
+            if temp.count(pname) > 0:
+                ind = temp.index(pname)
+                pre=''
+                post=''
+                if ind-1>0:
+                    pre=temp[ind-1]
+      
+                if ind+1<len(temp):
+                    post=temp[ind+1]
+      
+                if pre =='+' or post=='+':
+                    po.fsm.comp.value = 1
+                else:
+                    po.fsm.comp.value = 0
+            else:
+              pass
+
 
 # Parsing configuration file
 def parse_configuration_file(content, mode, repeat):
@@ -246,6 +251,7 @@ def main(config, mode, modrepeat=None):
         sys.exit(1)
 
     # Run resonance
-    return dynamic(resonance)(app_to_module_map, app_composition_str) >> dynamic(learn)()
+#    return resonance(app_to_module_map, app_composition_str) >> mac_learner()
+    return resonance(app_to_module_map, app_composition_str) >> flood()
 
 
