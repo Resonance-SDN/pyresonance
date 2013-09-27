@@ -120,8 +120,9 @@ def main():
         message_value = content
         message_type = MESSAGE_TYPES['info']
 
-    elif options.eventQuery is not None:
+    elif options.event_query is not None:
         message_type = MESSAGE_TYPES['query']
+        print message_type
 
     else: 
         print 'No value (state or info) for flow specified.'

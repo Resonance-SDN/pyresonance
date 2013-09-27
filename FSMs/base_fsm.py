@@ -27,6 +27,18 @@ class BaseFSM():
 #     def transition_callback(self, cb, arg):
 #         self.cb = cb
 #         self.cbarg = arg
+    def debug_handler(self, message, queue):
+        return_str = ''
+        if message['message_type'] == MESSAGE_TYPES['query']:
+            state_str = self.get_state(message['flow'])
+            return_str = "\n*** State information in module () ***"
+            return_str = return_str + "\n* Flow: " + str(message['flow'])
+            return_str = return_str + "\n* State: " + str(state_str) + '\n'
+            print return_str
+        elif message['message_type'] == MESSAGE_TYPES['trigger']:
+            self.trigger_module_off(message['message_value'], queue)
+
+        return return_str
 
     def default_handler(self, message, queue):
         
@@ -120,3 +132,9 @@ class BaseFSM():
             if DEBUG == True:
                 print "Current States: ", self.flow_to_state_map
     
+    def turn_off_module(self, f):
+        if f.comp.value == 0:
+            return passthrough
+        else:
+            return drop
+

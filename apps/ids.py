@@ -40,7 +40,7 @@ PORT = 50002
 
 
 class IDSFSM(BaseFSM):
-    
+ 
     def default_handler(self, message, queue):
         return_value = 'ok'
         
@@ -52,21 +52,13 @@ class IDSFSM(BaseFSM):
                 self.state_transition(message['message_value'], message['flow'], queue)
             elif message['message_type'] == MESSAGE_TYPES['info']:
                 pass
-            elif message['message_type'] == MESSAGE_TYPES['query']:
-                state_str = self.get_state(message['flow'])
-                return_str = "\n*** State information in module (" + self.module_name + ") ***"
-                return_str = return_str + "\n* Flow: " + str(message['flow'])
-                return_str = return_str + "\n* State: " + str(state_str) + '\n'
-                print return_str
-                return_value = return_str
-            elif message['message_type'] == MESSAGE_TYPES['trigger']:
-                self.trigger_module_off(message['message_value'], queue)
+            else: 
+                return_value = self.debug_handler(message, queue)
         else:
             print "IDS: ignoring message type."
             
         return return_value
-    
-    
+
 class IDSPolicy(BasePolicy):
     
     def __init__(self, fsm):
@@ -92,10 +84,7 @@ class IDSPolicy(BasePolicy):
             return p1 + p2
 
         else:
-            if self.fsm.comp.value == 0:
-                return passthrough
-            else:
-                return drop
+            return self.turn_off_module(self.fsm)
 
 def main(queue):
     
