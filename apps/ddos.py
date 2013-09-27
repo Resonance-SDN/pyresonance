@@ -31,13 +31,8 @@ class DDoSFSM(BaseFSM):
                 self.state_transition(message['message_value'], message['flow'], queue)
             elif message['message_type'] == MESSAGE_TYPES['info']:
                 pass
-            elif message['message_type'] == MESSAGE_TYPES['query']:
-                state_str = self.get_state(message['flow'])
-                return_str = "\n*** State information in module (" + self.module_name + ") ***"
-                return_str = return_str + "\n* Flow: " + str(message['flow'])
-                return_str = return_str + "\n* State: " + str(state_str) + '\n'
-                print return_str
-                return_value = return_str
+            else: 
+                return_value = self.debug_handler(message, queue)
         else:
             print "DDoS: ignoring message type."
             
@@ -53,14 +48,17 @@ class DDoSPolicy(BasePolicy):
         return passthrough
     
     def action(self):
-        # Match incoming flow with each state's flows
-        match_denied_flows = self.fsm.get_policy('denied')
-
-        # Create state policies for each state
-        p1 = if_(match_denied_flows, drop, self.allow_policy())
-
-        # Parallel composition 
-        return p1
+        if self.fsm.trigger.value == 0:
+            # Match incoming flow with each state's flows
+            match_denied_flows = self.fsm.get_policy('denied')
+    
+            # Create state policies for each state
+            p1 = if_(match_denied_flows, drop, self.allow_policy())
+    
+            # Parallel composition 
+            return p1
+        else:
+            return self.turn_off_module(self.fsm.comp.value)
 
 def main(queue):
     

@@ -19,7 +19,7 @@ from ..globals import *
 # 1. Decide which port to use to receive event
 ##############################################################################
 HOST = '127.0.0.1'
-PORT = 50010
+PORT = 50015
 
 class YourAppFSM(BaseFSM):
   
@@ -40,15 +40,8 @@ class YourAppFSM(BaseFSM):
         self.state_transition(message['message_value'], message['flow'], queue)
       elif message['message_type'] == MESSAGE_TYPES['info']:
         pass
-      elif message['message_type'] == MESSAGE_TYPES['query']:
-        state_str = self.get_state(message['flow'])
-        return_str = "\n*** State information in module (" + self.module_name + ") ***"
-        return_str = return_str + "\n* Flow: " + str(message['flow'])
-        return_str = return_str + "\n* State: " + str(state_str) + '\n'
-        print return_str
-        return_value = return_str
-      elif message['message_type'] == MESSAGE_TYPES['trigger']:
-        self.trigger_module_off(message['message_value'], queue)
+      else: 
+        return_value = self.debug_handler(message, queue)
     else:
       print "YourApp: ignoring message type."
       
@@ -63,10 +56,10 @@ class YourAppPolicy(BasePolicy):
   ##############################################################################
   # 4. Define and implement state policies
   ##############################################################################
-  def block_policy(self):
+  def block(self):
     return drop
 
-  def allow_policy(self):
+  def allow(self):
     return passthrough
  
   def action(self):
@@ -75,21 +68,18 @@ class YourAppPolicy(BasePolicy):
       # 5. Match with states, and return desired policy
       ##############################################################################
       # Get the flow space for each state
-      match_allow_flows = self.fsm.get_policy('allow')
       match_block_flows = self.fsm.get_policy('block')
+      match_allow_flows = self.fsm.get_policy('allow')
 
       # Match incoming flow with each flow space
-      p1 = if_(match_allow_flows, self.allow_policy(), drop)
-      p2 = if_(match_block_flows, self.block_policy(), drop)
+      p1 = if_(match_block_flows, self.allow(), drop)
+      p2 = if_(match_allow_flows, self.block(), drop)
 
       # Parallel composition 
       return p1 + p2
 
     else:
-      if self.fsm.comp.value == 0:
-        return passthrough
-      else:
-        return drop
+      return self.turn_off_module(self.fsm.comp.value)
 
 def main(queue):
   ##############################################################################
