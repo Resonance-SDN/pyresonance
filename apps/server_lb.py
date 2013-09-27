@@ -12,7 +12,7 @@ from ..FSMs.base_fsm import *
 from ..policies.base_policy import *
 from ..drivers.json_event import *
 from ..globals import *
-from pyretic.examples.load_balancer import *
+from ..etc.load_balancer import *
 
 
 ################################################################################
@@ -52,15 +52,8 @@ class ServerLBFSM(BaseFSM):
         self.state_transition(message['message_value'], message['flow'], queue)
       elif message['message_type'] == MESSAGE_TYPES['info']:
         pass
-      elif message['message_type'] == MESSAGE_TYPES['query']:
-        state_str = self.get_state(message['flow'])
-        return_str = "\n*** State information in module (" + self.module_name + ") ***"
-        return_str = return_str + "\n* Flow: " + str(message['flow'])
-        return_str = return_str + "\n* State: " + str(state_str) + '\n'
-        return_value = return_str
-      elif message['message_type'] == MESSAGE_TYPES['trigger']:
-        self.trigger_module_off(message['message_value'], queue)
-
+      else: 
+        return_value = self.debug_handler(message, queue)
     else:
       print "ServerLB: ignoring message type."
           
@@ -109,10 +102,7 @@ class ServerLBPolicy(BasePolicy):
       return p1 + p2
 
     else:
-      if self.fsm.comp.value == 0:
-        return passthrough
-      else:
-        return drop
+      return self.turn_off_module(self.fsm.comp.value)
 
 def main(queue):
 
