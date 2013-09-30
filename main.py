@@ -39,8 +39,7 @@
 
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
-from pyretic.lib.query import *
-from pyretic.modules.mac_learner import mac_learner
+from pyretic.modules.mac_learner import learn
 
 from .globals import *
 
@@ -53,51 +52,16 @@ import sys
 import re
 
 # Dynamic resonance policy ######
-#def resonance(self, app_to_module_map, app_composition_str):
-class resonance(DynamicPolicy):
-    def __init__(self, app_to_module_map, app_composition_str):
-        super(resonance,self).__init__()
-        self.app_composition_str = app_composition_str
-        self.app_to_module_map = app_to_module_map
-        self.app_to_policy_map = {}
-        self.user_fsm_list = []
-        self.fsm_to_policy_map = {}
-        self.user_policy_list = []
-
-        # Create queue for receiving state transition notification
-        queue = Queue()
-
-        # Get user-defined FSMs, make them, make eventListeners
-        for idx, app in enumerate(self.app_to_module_map):
-            user_fsm, user_policy = self.app_to_module_map[app].main(queue)
-            self.user_fsm_list.append(user_fsm)
-            self.fsm_to_policy_map[user_fsm] = user_policy
-            self.user_policy_list.append(user_policy)
-            self.app_to_policy_map[app] = user_policy
-
-        ## Adding the feature to determine the comp variable 
-        ##  to determine action for the module while turning it off
-        for pname in self.app_to_policy_map.keys():
-            po = self.app_to_policy_map[pname]
-            self.update_comp(po,pname, self.app_composition_str)
-
-        # Start signal catcher thread
-        t1 = threading.Thread(target=self.transition_signal_catcher, args=(queue,))
-        t1.daemon = True
-        t1.start()
-    
-        # Set the policy
-        self.update_policy()
-
+def resonance(self, app_to_module_map, app_composition_str):
     # Composing department policies, switch-based
-    def compose_policy_departments_switchbased(self):
+    def compose_policy_departments_switchbased():
         final_policy = parallel([(fsm.get_match_switch() >> self.fsm_to_policy_map[fsm].action()) \
                             for fsm in self.fsm_to_policy_map])
 
         return final_policy
     
     # Composing policy
-    def compose_policy(self):
+    def compose_policy():
         policy = drop
         policy_str = self.app_composition_str
         
@@ -111,28 +75,22 @@ class resonance(DynamicPolicy):
                     replace_str = 'self.user_policy_list[' + str(policy_index) + '].action()'
                     policy_str = policy_str.replace(app, replace_str)
              
-#        print 'Raw string: ' + policy_str
-#        print 'Evaluated: \n' + str(eval(policy_str))
         return eval(policy_str)
 
     # Updating policy
-    def update_policy(self):
+    def update_policy():
         if self.app_composition_str == '':
-            self.policy = self.compose_policy_departments_switchbased()
+            self.policy = compose_policy_departments_switchbased()
         else:
-#            self.policy = self.compose_policy() + if_(match(ethtype=2054), passthrough, drop)
-            self.policy = self.compose_policy()
-#            self.policy = union([if_(match(srcip='10.0.0.1'), passthrough,drop), if_(match(srcip='10.0.0.2'), passthrough,drop)])
+            self.policy = compose_policy()
         # Record
-        ts = time.time()
-        subprocess.call("echo %.7f >> /home/mininet/hyojoon/benchmark/pyresonance-benchmark/event_test/output/process_time/of.txt"%(ts), shell=True)
+#        ts = time.time()
+#        subprocess.call("echo %.7f >> /home/mininet/hyojoon/benchmark/pyresonance-benchmark/event_test/output/process_time/of.txt"%(ts), shell=True)
 
-#        print 'Policy:'
-#        print self.policy
-
+    self.update_policy = update_policy
 
     # Listen for state transitions.
-    def transition_signal_catcher(self,queue):
+    def transition_signal_catcher(queue):
         while 1:
             try:  
                 line = queue.get(timeout=.1)
@@ -141,7 +99,7 @@ class resonance(DynamicPolicy):
             else: # Got line 
                 self.update_policy()
 
-    def update_comp(self, po,pname,strn):
+    def update_comp(po,pname,strn):
         if strn == '': # probably auto mode.
             po.fsm.comp.value = 0
 
@@ -164,6 +122,40 @@ class resonance(DynamicPolicy):
             else:
               pass
 
+    def initialize():
+        self.app_composition_str = app_composition_str
+        self.app_to_module_map = app_to_module_map
+        self.app_to_policy_map = {}
+        self.user_fsm_list = []
+        self.fsm_to_policy_map = {}
+        self.user_policy_list = []
+
+        # Create queue for receiving state transition notification
+        queue = Queue()
+
+        # Get user-defined FSMs, make them, make eventListeners
+        for idx, app in enumerate(self.app_to_module_map):
+            user_fsm, user_policy = self.app_to_module_map[app].main(queue)
+            self.user_fsm_list.append(user_fsm)
+            self.fsm_to_policy_map[user_fsm] = user_policy
+            self.user_policy_list.append(user_policy)
+            self.app_to_policy_map[app] = user_policy
+
+        ## Adding the feature to determine the comp variable 
+        ##  to determine action for the module while turning it off
+        for pname in self.app_to_policy_map.keys():
+            po = self.app_to_policy_map[pname]
+            update_comp(po,pname, self.app_composition_str)
+
+        # Start signal catcher thread
+        t1 = threading.Thread(target=transition_signal_catcher, args=(queue,))
+        t1.daemon = True
+        t1.start()
+    
+        # Set the policy
+        self.update_policy()
+
+    initialize()
 
 # Parsing configuration file
 def parse_configuration_file(content, mode, repeat):
@@ -251,7 +243,6 @@ def main(config, mode, modrepeat=None):
         sys.exit(1)
 
     # Run resonance
-#    return resonance(app_to_module_map, app_composition_str) >> mac_learner()
-    return resonance(app_to_module_map, app_composition_str) >> flood()
-
+    return dynamic(resonance)(app_to_module_map, app_composition_str) >> flood()
+#    return dynamic(resonance)(app_to_module_map, app_composition_str) >> dynamic(learn)()
 
