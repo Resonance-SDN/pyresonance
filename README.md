@@ -13,5 +13,5 @@ PyResonance is Resonance implemented with [Pyretic](http://frenetic-lang.org/pyr
     - [Pre-configured VM with PyResonance installed (will be up soon)]()
     - [Downloading PyResonance in Pyretic VM](https://github.com/Resonance-SDN/pyresonance/wiki/Downloading-PyResonance-Module-in-Pyretic-VM)
   - **Running PyResonance**
-    - [Running PyResonance with existing examples](https://github.com/Resonance-SDN/pyresonance/wiki/What-is-PyResonance%3F)
+    - [Running PyResonance with existing examples](https://github.com/Resonance-SDN/pyresonance/wiki/Running-PyResonance)
     - [Step-by-step tutorial for implementing your own PyResonance task (app)](https://github.com/Resonance-SDN/pyresonance/wiki/How-to-write-a-PyResonance-Task:-Step-by-step-tutorial)
