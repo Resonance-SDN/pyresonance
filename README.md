@@ -10,7 +10,9 @@ PyResonance
 PyResonance is Resonance implemented with [Pyretic](http://frenetic-lang.org/pyretic/). Pyretic provides a better programmer-friendly environment with high-level APIs, libraries, and constructs. Pyretic's composition operators (parallel and sequential) add great value for composing modular programs. 
 
   - **Getting ready**
-    - [Pre-configured VM with PyResonance installed (will be up soon)]()
+    - Pre-configured VM with PyResonance installed
+      - [32-bit VM (VirtualBox OVA file)](http://resonance.noise.gatech.edu/data/PyResonance_0.1.0_32bit.ova)
+      - [64-bit VM (VirtualBox OVA file)](http://resonance.noise.gatech.edu/data/PyResonance_0.1.0_64bit.ova)
     - [Downloading PyResonance in Pyretic VM](https://github.com/Resonance-SDN/pyresonance/wiki/Downloading-PyResonance-Module-in-Pyretic-VM)
   - **Running PyResonance**
     - [Running PyResonance with existing examples](https://github.com/Resonance-SDN/pyresonance/wiki/Running-PyResonance)
