@@ -39,7 +39,6 @@
 
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
-from pyretic.lib.query import *
 from pyretic.modules.mac_learner import mac_learner
 
 from .globals import *
@@ -123,9 +122,9 @@ class resonance(DynamicPolicy):
 #            self.policy = self.compose_policy() + if_(match(ethtype=2054), passthrough, drop)
             self.policy = self.compose_policy()
 #            self.policy = union([if_(match(srcip='10.0.0.1'), passthrough,drop), if_(match(srcip='10.0.0.2'), passthrough,drop)])
-        # Record
-        ts = time.time()
-        subprocess.call("echo %.7f >> /home/mininet/hyojoon/benchmark/pyresonance-benchmark/event_test/output/process_time/of.txt"%(ts), shell=True)
+#        # Record
+#        ts = time.time()
+#        subprocess.call("echo %.7f >> /home/mininet/hyojoon/benchmark/pyresonance-benchmark/event_test/output/process_time/of.txt"%(ts), shell=True)
 
 #        print 'Policy:'
 #        print self.policy
