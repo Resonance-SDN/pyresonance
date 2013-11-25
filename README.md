@@ -14,7 +14,7 @@ PyResonance is Resonance implemented with [Pyretic](http://frenetic-lang.org/pyr
         - ``sudo easy_install ipaddr``
     - Old master branch now moved to branch called "pyretic-deprecated".
   - **Getting ready**
-    - Pre-configured VM with PyResonance installed
+    - Pre-configured VM with PyResonance installed (updated Nov.25.2013)
       - [32-bit VM (VirtualBox OVA file)](http://resonance.noise.gatech.edu/data/PyResonance_0.2.0_32bit.ova)
       - [64-bit VM (VirtualBox OVA file)](http://resonance.noise.gatech.edu/data/PyResonance_0.2.0_64bit.ova)
     - [Downloading PyResonance in Pyretic VM](https://github.com/Resonance-SDN/pyresonance/wiki/Downloading-PyResonance-Module-in-Pyretic-VM)
