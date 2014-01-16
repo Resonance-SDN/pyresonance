@@ -23,20 +23,20 @@ class JSONEvent():
         return_value = {}
         
         event = json_message['event']
-        return_value['event_type'] = event['event_type']
+        return_value['app_type'] = event['app_type']
         
         message = event['message']
-        return_value['message_type'] = message['message_type']
-        return_value['message_value'] = message['message_value']
-        return_value['flow'] = message['message_payload']
+        return_value['type'] = message['type']
+        return_value['value'] = message['value']
+        return_value['flow'] = message['payload']
 
         return return_value
 
-    def start(self, queue):
-        p1 = Process(target=self.event_listener, args=(queue,))
+    def start(self, queue,appname):
+        p1 = Process(target=self.event_listener, args=(queue,appname))
         p1.start()
         
-    def event_listener(self, queue):
+    def event_listener(self, queue, appname):
         message = ''
     
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -58,7 +58,7 @@ class JSONEvent():
                 
                 message = message + data
                 
-                return_value = self.handler(self.parse_json(message), queue)
+                return_value = self.handler(self.parse_json(message), queue, appname)
                 conn.sendall(return_value)
 
 

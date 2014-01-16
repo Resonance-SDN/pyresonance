@@ -31,11 +31,11 @@ def main():
     op.add_option( '--file', action="store",  \
                      dest="file", help = 'File containing the flow tuple information. It should follow the format of the flow as above i.e., starts with {..' )
 
-    op.add_option( '--event-type', '-e', type='choice', dest="event_type",\
-                     choices=['auth','ids', 'ids_new','serverlb', 'ratelimit'], help = '|'.join( ['auth','ids','serverlb', 'ratelimit'] )  )
+    op.add_option( '--app-type', '-e', type='choice', dest="app_type",\
+                     choices=['auth','ids', 'serverlb', 'ratelimit', 'ids_new'], help = '|'.join( ['auth','ids','serverlb', 'ratelimit', 'ids_new'] )  )
 
-    op.add_option( '--event-state', '-s', action="store",\
-                     dest="event_state", help = 'The state value for this flow.'  )
+    op.add_option( '--event-name', '-n', action="store",\
+                     dest="event_name", help = 'The state value for this flow.'  )
 
     op.add_option( '--event-info', '-i', action="store",  \
                      dest="event_info", help = 'The information sent about this flow. Give path to file that contains the information. Information should be in JSON format.'  )
@@ -97,16 +97,16 @@ def main():
     if options.addr is None and options.port is None:
         print 'No IP address or Port information is given. Exiting.'
         return
-    if options.event_type is None:
+    if options.app_type is None:
         print 'No event type is given. Exiting.'
         return
-    elif options.event_state is not None:
-        message_value = options.event_state
-        message_type = MESSAGE_TYPES['state']
+    elif options.event_name is not None:
+        message_value = options.event_name
+        message_type = MESSAGE_TYPE.event
 
     elif options.event_trigger is not None:
         message_value = options.event_trigger
-        message_type = MESSAGE_TYPES['trigger'] 
+        message_type = MESSAGE_TYPE.trigger
 
     elif options.event_info is not None:
         try:
@@ -118,10 +118,10 @@ def main():
             
         content = fd.read()
         message_value = content
-        message_type = MESSAGE_TYPES['info']
+        message_type = MESSAGE_TYPE.info
 
     elif options.event_query is not None:
-        message_type = MESSAGE_TYPES['query']
+        message_type = MESSAGE_TYPE.query
         print message_type
 
     else: 
@@ -130,14 +130,14 @@ def main():
         sys.exit(1)
         
     # Construct JSON message
-    json_message = dict(event=dict(event_type=options.event_type,                   \
+    json_message = dict(event=dict(app_type=options.app_type,                   \
                                    sender=dict(sender_id=1,                         \
                                                description=1,                       \
                                            addraddr=options.addr,             \
                                                port=options.port),                  \
-                                    message=dict(message_type=message_type,         \
-                                                 message_payload=message_payload,   \
-                                                 message_value=message_value),      \
+                                    message=dict(type=message_type,         \
+                                                 payload=message_payload,   \
+                                                 value=message_value),      \
                                     transition=dict(prev=1,                         \
                                                     next=1)                         \
                                    ))

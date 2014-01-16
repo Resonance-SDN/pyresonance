@@ -18,34 +18,44 @@ class BaseFSM():
     
     def __init__(self):
         manager = Manager()
-        
+ 
+        # Flow to state mapping
         self.flow_to_state_map = manager.dict()
         self.flow_to_state_map.clear()
+
+        # Transition map. { (eventname, prev_state) : next_state }
+        self.transition_map = manager.dict()
+        self.transition_map.clear()
+
+        # For module on/off functionality.
         self.trigger = manager.Value('i', 0)
         self.comp = manager.Value('i', 0) # sequential = 0, parallel = 1 
-        
-#     def transition_callback(self, cb, arg):
-#         self.cb = cb
-#         self.cbarg = arg
-    def debug_handler(self, message, queue):
-        return_str = 'ok'
-        if message['message_type'] == MESSAGE_TYPES['query']:
-            state_str = self.get_state(message['flow'])
-            return_str = "\n*** State information in module () ***"
-            return_str = return_str + "\n* Flow: " + str(message['flow'])
-            return_str = return_str + "\n* State: " + str(state_str) + '\n'
-            print return_str
-        elif message['message_type'] == MESSAGE_TYPES['trigger']:
-            self.trigger_module_off(message['message_value'], queue)
 
-        return return_str
 
-    def default_handler(self, message, queue):
-        
-        return_value = 'ok'
-    
-        return return_value
-    
+    def event_handler(self, message, queue, appname):
+        if DEBUG == True:
+            print str(appname) + " handler: ", message['flow']
+            
+        if message['app_type'] != APP_TYPES[appname]:
+            print str(appname) + ": ignoring message type."
+            return 'ok'
+
+        if message['type'] == MESSAGE_TYPE.info:
+            return 'ok'
+
+        # if it's an event, determine the next state and transition, if needed
+        elif message['type'] == MESSAGE_TYPE.event:
+            event = message['value']
+            flow = message['flow']
+            next_state = self.get_next_state(event,flow)
+            if next_state != self.get_state(flow):
+                self.state_transition(next_state, flow, queue)
+            return 'ok'
+        # otherwise something is wrong and we debug
+        else: 
+            return self.debug_handler(message, queue)
+
+
     def get_state(self, flow):
         
         flow_str = str(flow)
@@ -81,7 +91,6 @@ class BaseFSM():
                 print "Turning the module off"
             elif int(trigger_val)==0:
                 print "Turning the module on"
-#            print "new trigger value: "+str(self.trigger.value)
             self.trigger.value = int(trigger_val)
             queue.put('transition')
 
@@ -115,21 +124,54 @@ class BaseFSM():
 
         return union(matching_list)
 
-    def state_transition(self, next_state, flow, queue, previous_state=None):
+
+    def get_next_state(self, eventname, flow):
+        prev_state = self.get_state(flow) 
         
-        state = self.get_state(flow) 
-        
-        if previous_state is not None:
-            if state != previous_state:
-                print 'Given previous state is incorrect! Do nothing.'
-                return
+        if prev_state is not None:
+            if self.transition_map.has_key( (eventname, prev_state) ) is True:
+                return self.transition_map.has_key[ (eventname, prev_state) ]
+            else:
+                return prev_state
         else:
-            print "state_transition ->", str(flow), next_state
-            queue.put('transition')
+            print "Not in any state. Something is wrong.."
+            return None
+
+
+    def state_transition(self, next_state, flow, queue, previous_state=None):
             
-            self.flow_to_state_map[str(flow)] = next_state
+        state = self.get_state(flow) 
+        print "state_transition ->", str(flow), next_state
+         
+        queue.put('transition')
             
-            if DEBUG == True:
-                print "Current States: ", self.flow_to_state_map
+        self.flow_to_state_map[str(flow)] = next_state
+            
+        if DEBUG == True:
+            print "Current States: ", self.flow_to_state_map
     
+        
+    def set_init_state(self, state):
+        self.init_state = state
+#        self.state_transition(state,'{}', queue)
+
+
+    def define_trans__event_from_to(self, eventname, prev_state, next_state):
+        event_prevstate_pair = (eventname, prev_state)
+        self.transition_map[event_prevstate_pair] = next_state
+
+
+    def debug_handler(self, message, queue):
+        return_str = 'ok'
+        if message['message_type'] == MESSAGE_TYPE.query:
+            state_str = self.get_state(message['flow'])
+            return_str = "\n*** State information in module () ***"
+            return_str = return_str + "\n* Flow: " + str(message['flow'])
+            return_str = return_str + "\n* State: " + str(state_str) + '\n'
+            print return_str
+        elif message['message_type'] == MESSAGE_TYPE.trigger:
+            self.trigger_module_off(message['message_value'], queue)
+
+        return return_str
+
 
