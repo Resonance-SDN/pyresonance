@@ -59,7 +59,7 @@ class resonance(DynamicPolicy):
         self.app_composition_str = app_composition_str
         self.app_to_module_map = app_to_module_map
         self.app_to_policy_map = {}
-        self.user_policyfsm_list = []
+        self.user_fsm_policy_list = []
         self.fsm_to_policy_map = {}
         self.user_policy_list = []
 
@@ -68,11 +68,11 @@ class resonance(DynamicPolicy):
 
         # Get user-defined FSMs, make them, make eventListeners
         for idx, app in enumerate(self.app_to_module_map):
-            user_policyfsm = self.app_to_module_map[app].main(queue,app)
-            self.user_policyfsm_list.append(user_policyfsm)
-            self.fsm_to_policy_map[user_policyfsm] = user_policyfsm
-            self.user_policyfsm_list.append(user_policyfsm)
-            self.app_to_policy_map[app] = user_policyfsm
+            user_fsm_policy = self.app_to_module_map[app].main(queue,app)
+            self.user_fsm_policy_list.append(user_fsm_policy)
+            self.fsm_to_policy_map[user_fsm_policy] = user_fsm_policy
+            self.user_fsm_policy_list.append(user_fsm_policy)
+            self.app_to_policy_map[app] = user_fsm_policy
 
         ## Adding the feature to determine the comp variable 
         ##  to determine action for the module while turning it off
@@ -105,9 +105,9 @@ class resonance(DynamicPolicy):
             id = policy_str.find(app)
             
             if id != -1:
-                if self.app_to_policy_map[app] in self.user_policyfsm_list:
-                    policy_index = self.user_policyfsm_list.index(self.app_to_policy_map[app])
-                    replace_str = 'self.user_policyfsm_list[' + str(policy_index) + '].action()'
+                if self.app_to_policy_map[app] in self.user_fsm_policy_list:
+                    policy_index = self.user_fsm_policy_list.index(self.app_to_policy_map[app])
+                    replace_str = 'self.user_fsm_policy_list[' + str(policy_index) + '].action()'
                     policy_str = policy_str.replace(app, replace_str)
              
 #        print 'Raw string: ' + policy_str

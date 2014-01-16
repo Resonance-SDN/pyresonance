@@ -9,8 +9,7 @@
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
-from ..FSMs.base_fsm import *
-from ..policies.base_policy import *
+from ..fsm_policy import *
 from ..drivers.json_event import *
 
 from ..globals import *
@@ -49,22 +48,22 @@ def allow_policy():
 
 def main(queue,appname):
     # Create policy using state machine
-    policyfsm = BasePolicy()
+    fsm = FSMPolicy()
 
     # Define state, and bind policy to state. 
-    policyfsm.define_state_and_bind( 'infected_state', infected_policy() )
-    policyfsm.define_state_and_bind( 'clean_state', allow_policy() )
+    fsm.define_state_and_bind( 'infected_state', infected_policy() )
+    fsm.define_state_and_bind( 'clean_state', allow_policy() )
 
     # Define initial state
-    policyfsm.set_init_state( 'clean_state' )
+    fsm.set_init_state( 'clean_state' )
 
     # Define transitions between states
-    policyfsm.define_trans__event_from_to('intrusion','ANY','infected_state')
-    policyfsm.define_trans__event_from_to('sanitized','ANY','clean_state')
+    fsm.define_trans__event_from_to('intrusion','ANY','infected_state')
+    fsm.define_trans__event_from_to('sanitized','ANY','clean_state')
 
     # Create an event source (i.e., JSON)
-    json_event = JSONEvent(policyfsm.event_handler, HOST, PORT)
+    json_event = JSONEvent(fsm.event_handler, HOST, PORT)
     json_event.start(queue,appname)
     
-    return policyfsm
+    return fsm
     

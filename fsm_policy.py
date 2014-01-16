@@ -3,7 +3,6 @@
 # Resonance implemented with Pyretic platform                                  #
 # author: Hyojoon Kim (joonk@gatech.edu)                                       #
 # author: Nick Feamster (feamster@cc.gatech.edu)                               #
-# author: Arpit Gupta (glex.qsd@gmail.com)                                     #
 # author: Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)                       #
 ################################################################################
 
@@ -12,9 +11,12 @@ from pyretic.lib.std import *
 
 from multiprocessing import Process, Manager
 
-from ..globals import *
+from globals import *
 
-class BaseFSM():
+
+class FSMPolicy():
+    
+    state_to_policy_map = {}
     
     def __init__(self):
         manager = Manager()
@@ -30,6 +32,7 @@ class BaseFSM():
         # For module on/off functionality.
         self.trigger = manager.Value('i', 0)
         self.comp = manager.Value('i', 0) # sequential = 0, parallel = 1 
+        self.state_to_policy_map['default'] = self.default_policy()
 
 
     def event_handler(self, message, queue, appname):
@@ -174,4 +177,32 @@ class BaseFSM():
 
         return return_str
 
+        
+    def default_policy(self):
+        return drop
+        
+    def turn_off_module(self, value):
+        if value == 0:
+            return passthrough
+        else:
+            return drop
+
+
+    def action(self):
+        if self.trigger.value == 0:
+            policy_list = []
+
+            for state in self.state_to_policy_map:
+                flows = self.get_policy(state)
+                policy_piece = flows >> self.state_to_policy_map[state]
+                policy_list.append(policy_piece)
+
+            return parallel(policy_list)
+
+        else:
+            return self.turn_off_module(self.comp.value)
+
+
+    def define_state_and_bind(self, state_name, policy):
+        self.state_to_policy_map[state_name] = policy
 
