@@ -46,6 +46,7 @@ class FlowFSM(DynamicPolicy):
             return set()
          
     def handle_var_change(self,init_var_name):
+        changed_vars = { init_var_name }
         dependent_vars = self.get_dependent_vars(init_var_name)
         while len(dependent_vars) > 0:
             var_name = dependent_vars.pop()
@@ -53,6 +54,9 @@ class FlowFSM(DynamicPolicy):
             if next_val != self.state[var_name]:
                 self.state[var_name] = next_val
                 dependent_vars |= self.get_dependent_vars(var_name)
+                changed_vars.add(var_name)
+        if 'policy' in changed_vars:
+            self.policy = self.state['policy']
 
     def current_state_string(self):
         return '{' + '\n'.join([str(name) + ' : ' + str(val) for name,val in self.state.items()]) + '}'
