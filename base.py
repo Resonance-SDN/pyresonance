@@ -74,9 +74,20 @@ class FSMPolicy(DynamicPolicy):
             lambda : FlowFSM(fsm_description))
 
     def event_msg_handler(self,event_msg):
+
+        def convert(field,value):
+            if field == 'srcip' or field == 'dstip':
+                return IPAddr(value)
+            elif field == 'srcmac' or field == 'dstmac':
+                return EthAddr(value)
+            else:
+                return int(value)
+
         event_name = event_msg['name']
         event_value = event_msg['value']
         event_flow = frozendict(event_msg['flow'])
-        self._flowclass_to_flowfsm[event_flow].handle_event(event_name,event_value)
+        converted_event_flow = { k : convert(k,v) for k,v in event_flow.items() if v }
+        flow_pred = match(converted_event_flow)
+        self._flowclass_to_flowfsm[flow_pred].handle_event(event_name,event_value)
 
 
