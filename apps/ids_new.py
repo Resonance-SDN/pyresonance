@@ -9,10 +9,9 @@
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
-from ..fsm_policy import *
-from ..drivers.json_event import *
-
-from ..globals import *
+from pyretic.pyresonance.globals import *
+from pyretic.pyresonance.fsm_policy import *
+from pyretic.pyresonance.drivers.json_event import *
 
 HOST = '127.0.0.1'
 PORT = 50002

@@ -12,31 +12,21 @@ import SocketServer
 import json
 
 class JSONEvent():
+
+    port = 50001
     
-    def __init__(self, handler, addr, port):
+    def __init__(self, handler, addr='127.0.0.1'):
         self.handler = handler
         self.addr = addr
-        self.port = port
-
-    def parse_json(self, data):
-        json_message = json.loads(data)
-        return_value = {}
-        
-        event = json_message['event']
-        return_value['app_type'] = event['app_type']
-        
-        message = event['message']
-        return_value['type'] = message['type']
-        return_value['value'] = message['value']
-        return_value['flow'] = message['payload']
-
-        return return_value
-
-    def start(self, queue,appname):
-        p1 = Process(target=self.event_listener, args=(queue,appname))
+        self.port = JSONEvent.port
+        JSONEvent.port += 1
+        p1 = Process(target=self.event_listener)
         p1.start()
         
-    def event_listener(self, queue, appname):
+    def parse_json(self, data):
+        return json.loads(data)
+
+    def event_listener(self):
         message = ''
     
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -58,7 +48,8 @@ class JSONEvent():
                 
                 message = message + data
                 
-                return_value = self.handler(self.parse_json(message), queue, appname)
+                self.handler(self.parse_json(message))
+                return_value = 'ok'
                 conn.sendall(return_value)
 
 

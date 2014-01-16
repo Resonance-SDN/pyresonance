@@ -31,21 +31,12 @@ def main():
     op.add_option( '--file', action="store",  \
                      dest="file", help = 'File containing the flow tuple information. It should follow the format of the flow as above i.e., starts with {..' )
 
-    op.add_option( '--app-type', '-e', type='choice', dest="app_type",\
-                     choices=['auth','ids', 'serverlb', 'ratelimit', 'ids_new'], help = '|'.join( ['auth','ids','serverlb', 'ratelimit', 'ids_new'] )  )
-
     op.add_option( '--event-name', '-n', action="store",\
-                     dest="event_name", help = 'The state value for this flow.'  )
+                     dest="event_name", help = 'The event name.'  )
 
-    op.add_option( '--event-info', '-i', action="store",  \
-                     dest="event_info", help = 'The information sent about this flow. Give path to file that contains the information. Information should be in JSON format.'  )
- 
-    op.add_option( '--event-query', '-q', action="store",  \
-                     dest="event_query", help = 'Query the state information for this flow.' )
+    op.add_option( '--event-value', '-l', action="store",\
+                     dest="event_value", help = 'The event value.'  )
 
-    op.add_option( '--event-trigger', '-t', action="store", \
-                     dest="event_trigger", help = 'Trigger to turn the module ON/OFF' )
-    
     op.add_option( '--addr', '-a', action="store",\
                      dest="addr", help = 'The address of the controller.' )
     
@@ -54,23 +45,38 @@ def main():
 
     # Parsing and processing
     options, args = op.parse_args()
-      
-    flow = ''
-    message_payload= dict(inport=None,    \
-                          srcmac=None,    \
-                          dstmac=None,    \
-                          srcip=None,     \
-                          dstip=None,     \
-                          tos=None,       \
-                          srcport=None,   \
-                          dstport=None,   \
-                          ethtype=None,   \
-                          protocol=None,  \
-                          vlan_id=None,   \
-                          vlan_pcp=None)  \
+
+    if options.addr is None and options.port is None:
+        print 'No IP address or Port information is given. Exiting.'
+        return
+    elif options.event_name is None:
+        print 'No event name provided. Exiting.'
+        return
+    elif options.event_value is None:
+        print 'No event value provided. Exiting.'
+        return
+
+    # Parse flow      
+    flow_str = ''
+    flow_dict = dict(inport=None,
+                     srcmac=None,
+                     dstmac=None,
+                     srcip=None,
+                     dstip=None,
+                     tos=None,
+                     srcport=None,
+                     dstport=None,
+                     ethtype=None, 
+                     protocol=None,
+                     vlan_id=None, 
+                     vlan_pcp=None)
 
     # Open file if specified
-    if options.file is not None:
+    if options.file and options.flow_tuple:
+        print 'Can only specify one of (file,flow_tuple)'
+        return
+
+    elif options.file:
         try:
             fd = open(options.file, 'r')
         except IOError as err:
@@ -79,68 +85,20 @@ def main():
             sys.exit(1)
             
         content = fd.read()
-        flow = content
+        flow_str = content
     elif options.flow_tuple:
-        flow = options.flow_tuple
+        flow_str = options.flow_tuple
     else:
-        if options.event_trigger is None:
-            print 'No flow or trigger given. Exit.'
-            return 
+        print 'Need either flow_tuple or file'
+        return
 
-    # Parse flow
-    parse_flow(message_payload, flow)
+    parse_flow_str(flow_dict, flow_str)
 
-    # Sending state value or information?
-    message_value = None
-    message_type = None
     
-    if options.addr is None and options.port is None:
-        print 'No IP address or Port information is given. Exiting.'
-        return
-    if options.app_type is None:
-        print 'No event type is given. Exiting.'
-        return
-    elif options.event_name is not None:
-        message_value = options.event_name
-        message_type = MESSAGE_TYPE.event
-
-    elif options.event_trigger is not None:
-        message_value = options.event_trigger
-        message_type = MESSAGE_TYPE.trigger
-
-    elif options.event_info is not None:
-        try:
-            fd = open(options.event_info, 'r')
-        except IOError as err:
-            print 'Error opening file: ', err
-            print 'Aborting.\n'
-            sys.exit(1)
-            
-        content = fd.read()
-        message_value = content
-        message_type = MESSAGE_TYPE.info
-
-    elif options.event_query is not None:
-        message_type = MESSAGE_TYPE.query
-        print message_type
-
-    else: 
-        print 'No value (state or info) for flow specified.'
-        print 'Aborting.\n'
-        sys.exit(1)
-        
     # Construct JSON message
-    json_message = dict(event=dict(app_type=options.app_type,                   \
-                                   sender=dict(sender_id=1,                         \
-                                               description=1,                       \
-                                           addraddr=options.addr,             \
-                                               port=options.port),                  \
-                                    message=dict(type=message_type,         \
-                                                 payload=message_payload,   \
-                                                 value=message_value),      \
-                                    transition=dict(prev=1,                         \
-                                                    next=1)                         \
-                                   ))
+    json_message = dict(name=options.event_name,
+                        value=options.event_value,
+                        flow=flow_dict)
 
     # Create socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -159,57 +117,57 @@ def main():
 
     s.close()
     
-def parse_flow(message_payload, flow):
-    print "\nFlow = " + flow
-    m = re.search("inport=(\d+)\s*",flow)
+def parse_flow_str(flow_dict, flow_str):
+    print "\nFlow_Str = " + flow_str
+    m = re.search("inport=(\d+)\s*",flow_str)
     if m:
-        message_payload['inport'] = m.group(1)
+        flow_dict['inport'] = m.group(1)
         
-    m = re.search("srcmac=(\w\w:\w\w:\w\w:\w\w:\w\w:\w\w)\s*",flow)
+    m = re.search("srcmac=(\w\w:\w\w:\w\w:\w\w:\w\w:\w\w)\s*",flow_str)
     if m:
-        message_payload['srcmac'] = m.group(1)
+        flow_dict['srcmac'] = m.group(1)
 
-    m = re.search("dstmac=(\w\w:\w\w:\w\w:\w\w:\w\w:\w\w)\s*",flow)
+    m = re.search("dstmac=(\w\w:\w\w:\w\w:\w\w:\w\w:\w\w)\s*",flow_str)
     if m:
-        message_payload['dstmac'] = m.group(1)
+        flow_dict['dstmac'] = m.group(1)
 
-    m = re.search("srcip=(\d+\.\d+\.\d+\.\d+[\/\d+]*)\s*",flow)
+    m = re.search("srcip=(\d+\.\d+\.\d+\.\d+[\/\d+]*)\s*",flow_str)
     if m:
-        message_payload['srcip'] = m.group(1)
+        flow_dict['srcip'] = m.group(1)
 
-    m = re.search("dstip=(\d+\.\d+\.\d+\.\d+[\/\d+]*)\s*",flow)
+    m = re.search("dstip=(\d+\.\d+\.\d+\.\d+[\/\d+]*)\s*",flow_str)
     if m:
-        message_payload['dstip'] = m.group(1)
+        flow_dict['dstip'] = m.group(1)
  
-    m = re.search("tos=(\d+)\s*",flow)
+    m = re.search("tos=(\d+)\s*",flow_str)
     if m:
-        message_payload['tos'] = m.group(1)
+        flow_dict['tos'] = m.group(1)
 
-    m = re.search("srcport=(\d+)\s*",flow)
+    m = re.search("srcport=(\d+)\s*",flow_str)
     if m:
-        message_payload['srcport'] = m.group(1)
+        flow_dict['srcport'] = m.group(1)
 
-    m = re.search("dstport=(\d+)\s*",flow)
+    m = re.search("dstport=(\d+)\s*",flow_str)
     if m:
-        message_payload['dstport'] = m.group(1)
+        flow_dict['dstport'] = m.group(1)
 
-    m = re.search("ethtype=(\d+)\s*",flow)
+    m = re.search("ethtype=(\d+)\s*",flow_str)
     if m:
-        message_payload['ethtype'] = m.group(1)
+        flow_dict['ethtype'] = m.group(1)
 
-    m = re.search("protocol=(\d+)\s*",flow)
+    m = re.search("protocol=(\d+)\s*",flow_str)
     if m:
-        message_payload['protocol'] = m.group(1)
+        flow_dict['protocol'] = m.group(1)
 
-    m = re.search("vlan_id=(\d+)\s*",flow)
+    m = re.search("vlan_id=(\d+)\s*",flow_str)
     if m:
-        message_payload['vlan_id'] = m.group(1)
+        flow_dict['vlan_id'] = m.group(1)
 
-    m = re.search("vlan_pcp=(\d+)\s*",flow)
+    m = re.search("vlan_pcp=(\d+)\s*",flow_str)
     if m:
-        message_payload['vlan_pcp'] = m.group(1)
+        flow_dict['vlan_pcp'] = m.group(1)
 
-    print "\nData Payload = " + str(message_payload) + '\n'
+    print "\nData Payload = " + str(flow_dict) + '\n'
 
 # main ######
 if __name__ == '__main__':
