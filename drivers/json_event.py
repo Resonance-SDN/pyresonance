@@ -23,10 +23,26 @@ class JSONEvent():
         p1 = Process(target=self.event_listener)
         p1.start()
         
-    def parse_json(self, data):
-        return json.loads(data)
-
     def event_listener(self):
+
+        def parse_json(data):
+            return json.loads(data)
+
+        def unicode_dict_to_ascii(d):
+            new_d = dict()
+            for k,v in d.items():
+                if isinstance(v,str):
+                    new_d[k.encode('ascii','ignore')] = v.encode('ascii','ignore')
+                elif isinstance(v,unicode):
+                    new_d[k.encode('ascii','ignore')] = v.encode('ascii','ignore')
+                elif isinstance(v,dict):   
+                    new_d[k.encode('ascii','ignore')] = unicode_dict_to_ascii(v)
+                else:
+                    new_d[k.encode('ascii','ignore')] = v           
+                    
+            return new_d
+
+
         message = ''
     
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -47,8 +63,9 @@ class JSONEvent():
                     break
                 
                 message = message + data
-                
-                self.handler(self.parse_json(message))
+                unicode_dict = parse_json(message)
+                ascii_dict = unicode_dict_to_ascii(unicode_dict)
+                self.handler(ascii_dict)
                 return_value = 'ok'
                 conn.sendall(return_value)
 
