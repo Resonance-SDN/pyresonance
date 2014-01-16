@@ -34,6 +34,21 @@ class FSMPolicy():
         self.comp = manager.Value('i', 0) # sequential = 0, parallel = 1 
         self.state_to_policy_map['default'] = self.default_policy()
 
+    def define_state_and_bind(self, state_name, policy):
+        self.state_to_policy_map[state_name] = policy        
+
+    def define_trans__event_from_to(self, eventname, prev_state, next_state):
+        event_prevstate_pair = (eventname, prev_state)
+        self.transition_map[event_prevstate_pair] = next_state
+
+    def set_init_state(self, state):
+        self.init_state = state
+#        self.state_transition(state,'{}', queue)
+        
+    def default_policy(self):
+        return drop
+
+########
 
     def event_handler(self, message, queue, appname):
         if DEBUG == True:
@@ -57,7 +72,8 @@ class FSMPolicy():
         # otherwise something is wrong and we debug
         else: 
             return self.debug_handler(message, queue)
-
+        
+########
 
     def get_state(self, flow):
         
@@ -72,60 +88,6 @@ class FSMPolicy():
             print "get_state: ", flow_str, state            
 
         return state
-    
-    def get_flows(self, state):
-
-        flows = []
-        
-        for flow in self.flow_to_state_map.keys():
-            if (self.flow_to_state_map[flow] == state):
-                flows.append(flow)
-
-        return flows
-
-    def trigger_module_off(self,trigger_val,queue):
-        print "trigger_module_off called, trigger: "+str(self.trigger)+" trigger_val: "+str(trigger_val)
-        if self.trigger.value==1 and int(trigger_val)==1:
-            print "Module already turned off. No action required"
-        elif self.trigger.value==0 and int(trigger_val)==0:
-            print "Module already turned on. No action required"
-        else:
-            if int(trigger_val)==1:
-                print "Turning the module off"
-            elif int(trigger_val)==0:
-                print "Turning the module on"
-            self.trigger.value = int(trigger_val)
-            queue.put('transition')
-
-    def get_policy(self, state):
-        
-        matching_list = []
-        
-        flows = self.get_flows(state)
-
-        for flow in flows:
-            match_str = 'match('
-            flow_map = eval(flow)
-            
-            for idx, field in enumerate(STD_FLOW_FIELDS):
-                if flow_map[field] != None:
-                    if match_str.endswith('(') is False:
-                        match_str = match_str + ','
-                    
-                    if field.endswith('mac') is True:
-                        match_str = match_str + field + "=EthAddr('" + str(flow_map[field]) + "')"
-                    elif field.endswith('ip') is True:
-                        match_str = match_str + field + "=IPAddr('" + str(flow_map[field]) + "')"
-                    else:
-                        match_str = match_str + field + '=' + str(flow_map[field])
-
-            match_str = match_str + ')'
-            match_predicate = eval(match_str)
-
-            if match_str.__eq__('match()') is False:
-                matching_list.append(match_predicate)
-
-        return union(matching_list)
 
 
     def get_next_state(self, eventname, flow):
@@ -152,41 +114,49 @@ class FSMPolicy():
             
         if DEBUG == True:
             print "Current States: ", self.flow_to_state_map
-    
+
+
+    def get_policy(self, state):
+
+        def get_flows(state):
+
+            flows = []
         
-    def set_init_state(self, state):
-        self.init_state = state
-#        self.state_transition(state,'{}', queue)
+            for flow in self.flow_to_state_map.keys():
+                if (self.flow_to_state_map[flow] == state):
+                    flows.append(flow)
 
-
-    def define_trans__event_from_to(self, eventname, prev_state, next_state):
-        event_prevstate_pair = (eventname, prev_state)
-        self.transition_map[event_prevstate_pair] = next_state
-
-
-    def debug_handler(self, message, queue):
-        return_str = 'ok'
-        if message['message_type'] == MESSAGE_TYPE.query:
-            state_str = self.get_state(message['flow'])
-            return_str = "\n*** State information in module () ***"
-            return_str = return_str + "\n* Flow: " + str(message['flow'])
-            return_str = return_str + "\n* State: " + str(state_str) + '\n'
-            print return_str
-        elif message['message_type'] == MESSAGE_TYPE.trigger:
-            self.trigger_module_off(message['message_value'], queue)
-
-        return return_str
-
+            return flows
         
-    def default_policy(self):
-        return drop
+        matching_list = []
         
-    def turn_off_module(self, value):
-        if value == 0:
-            return passthrough
-        else:
-            return drop
+        flows = get_flows(state)
 
+        for flow in flows:
+            match_str = 'match('
+            flow_map = eval(flow)
+            
+            for idx, field in enumerate(STD_FLOW_FIELDS):
+                if flow_map[field] != None:
+                    if match_str.endswith('(') is False:
+                        match_str = match_str + ','
+                    
+                    if field.endswith('mac') is True:
+                        match_str = match_str + field + "=EthAddr('" + str(flow_map[field]) + "')"
+                    elif field.endswith('ip') is True:
+                        match_str = match_str + field + "=IPAddr('" + str(flow_map[field]) + "')"
+                    else:
+                        match_str = match_str + field + '=' + str(flow_map[field])
+
+            match_str = match_str + ')'
+            match_predicate = eval(match_str)
+
+            if match_str.__eq__('match()') is False:
+                matching_list.append(match_predicate)
+
+        return union(matching_list)
+
+###################
 
     def action(self):
         if self.trigger.value == 0:
@@ -202,7 +172,38 @@ class FSMPolicy():
         else:
             return self.turn_off_module(self.comp.value)
 
+    def turn_off_module(self, value):
+        if value == 0:
+            return passthrough
+        else:
+            return drop
 
-    def define_state_and_bind(self, state_name, policy):
-        self.state_to_policy_map[state_name] = policy
+    def trigger_module_off(self,trigger_val,queue):
+        print "trigger_module_off called, trigger: "+str(self.trigger)+" trigger_val: "+str(trigger_val)
+        if self.trigger.value==1 and int(trigger_val)==1:
+            print "Module already turned off. No action required"
+        elif self.trigger.value==0 and int(trigger_val)==0:
+            print "Module already turned on. No action required"
+        else:
+            if int(trigger_val)==1:
+                print "Turning the module off"
+            elif int(trigger_val)==0:
+                print "Turning the module on"
+            self.trigger.value = int(trigger_val)
+            queue.put('transition')
+
+###################
+
+    def debug_handler(self, message, queue):
+        return_str = 'ok'
+        if message['message_type'] == MESSAGE_TYPE.query:
+            state_str = self.get_state(message['flow'])
+            return_str = "\n*** State information in module () ***"
+            return_str = return_str + "\n* Flow: " + str(message['flow'])
+            return_str = return_str + "\n* State: " + str(state_str) + '\n'
+            print return_str
+        elif message['message_type'] == MESSAGE_TYPE.trigger:
+            self.trigger_module_off(message['message_value'], queue)
+
+        return return_str
 
