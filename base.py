@@ -9,8 +9,6 @@
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
-from globals import *
-
 class FlowFSM(dict):
     def __init__(self, fsm_description):
         self.type = dict()
