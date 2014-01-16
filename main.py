@@ -60,7 +60,6 @@ class resonance(DynamicPolicy):
         self.app_to_module_map = app_to_module_map
         self.app_to_policy_map = {}
         self.user_fsm_policy_list = []
-        self.fsm_to_policy_map = {}
         self.user_policy_list = []
 
         # Create queue for receiving state transition notification
@@ -69,8 +68,6 @@ class resonance(DynamicPolicy):
         # Get user-defined FSMs, make them, make eventListeners
         for idx, app in enumerate(self.app_to_module_map):
             user_fsm_policy = self.app_to_module_map[app].main(queue,app)
-            self.user_fsm_policy_list.append(user_fsm_policy)
-            self.fsm_to_policy_map[user_fsm_policy] = user_fsm_policy
             self.user_fsm_policy_list.append(user_fsm_policy)
             self.app_to_policy_map[app] = user_fsm_policy
 
@@ -90,8 +87,8 @@ class resonance(DynamicPolicy):
 
     # Composing department policies, switch-based
     def compose_policy_departments_switchbased(self):
-        final_policy = parallel([(fsm.get_match_switch() >> self.fsm_to_policy_map[fsm].action()) \
-                            for fsm in self.fsm_to_policy_map])
+        final_policy = parallel([(fsm.get_match_switch() >> fsm.action()) \
+                            for fsm in self.user_fsm_policy_list])
 
         return final_policy
     
@@ -110,8 +107,6 @@ class resonance(DynamicPolicy):
                     replace_str = 'self.user_fsm_policy_list[' + str(policy_index) + '].action()'
                     policy_str = policy_str.replace(app, replace_str)
              
-#        print 'Raw string: ' + policy_str
-#        print 'Evaluated: \n' + str(eval(policy_str))
         return eval(policy_str)
 
     # Updating policy
@@ -119,15 +114,7 @@ class resonance(DynamicPolicy):
         if self.app_composition_str == '':
             self.policy = self.compose_policy_departments_switchbased()
         else:
-#            self.policy = self.compose_policy() + if_(match(ethtype=2054), passthrough, drop)
             self.policy = self.compose_policy()
-#            self.policy = union([if_(match(srcip='10.0.0.1'), passthrough,drop), if_(match(srcip='10.0.0.2'), passthrough,drop)])
-#        # Record
-#        ts = time.time()
-#        subprocess.call("echo %.7f >> /home/mininet/hyojoon/benchmark/pyresonance-benchmark/event_test/output/process_time/of.txt"%(ts), shell=True)
-
-#        print 'Policy:'
-#        print self.policy
 
 
     # Listen for state transitions.
@@ -142,7 +129,7 @@ class resonance(DynamicPolicy):
 
     def update_comp(self, po,pname,strn):
         if strn == '': # probably auto mode.
-            po.fsm.comp.value = 0
+            po.comp.value = 0
 
         else:
             temp = strn.split(' ')
