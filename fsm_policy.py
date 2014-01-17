@@ -97,8 +97,10 @@ class FSMPolicy(DynamicPolicy):
         event_name = event_msg['name']
         event_value = event_msg['value']
         event_flow = frozendict(event_msg['flow'])
-        converted_event_flow = { k : convert(k,v) for k,v in event_flow.items() if v }
-        flec_pred = match(converted_event_flow)
+        event_flow = { k : convert(k,v) for 
+                       k,v in event_flow.items() if v }
+
+        flec_pred = match(event_flow)
 
         new_flec = not flec_pred in self._flec_pred_to_fsm
         flec_fsm = self._flec_pred_to_fsm[flec_pred]
