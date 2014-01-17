@@ -21,6 +21,7 @@ class JSONEvent():
         self.port = JSONEvent.port
         JSONEvent.port += 1
         p1 = Thread(target=self.event_listener)
+        p1.daemon = True
         p1.start()
         
     def event_listener(self):
