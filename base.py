@@ -12,12 +12,12 @@ import copy
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
-class FlowFSM(DynamicPolicy):
+class FlecFSM(DynamicPolicy):
     def __init__(self,t,s,n):
         self.type = copy.copy(t)
         self.state = copy.copy(s)
         self.next = n
-        super(FlowFSM,self).__init__(self.state['policy'])
+        super(FlecFSM,self).__init__(self.state['policy'])
 
     def handle_event(self,event_name,event_val_str):
         var_name = event_name
@@ -54,11 +54,29 @@ class FlowFSM(DynamicPolicy):
         if 'policy' in changed_vars:
             self.policy = self.state['policy']
 
+    def changed(self):
+        print "%d : %s" % (id(self), str(self.policy))
+        if self.notify:
+            self.notify(self)
+
     def current_state_string(self):
         return '{' + '\n'.join([str(name) + ' : ' + str(val) for name,val in self.state.items()]) + '}'
 
 
 from collections import defaultdict
+
+# class dependent_transition(object):
+#     def __init__(self):
+#         self.cases = [ (lambda state : state['infected'] : drop), 
+#                        ...,
+#                        (lambda state : True, identity) ]
+
+#     def eval(self,state):
+#         for test,ret in self.cases:
+#             if test(state):
+#                 return ret
+            
+
 
 
 class FSMPolicy(DynamicPolicy):
@@ -72,9 +90,10 @@ class FSMPolicy(DynamicPolicy):
             self.type[var_name] = state_type
             self.state[var_name] = init_val
             self.next[var_name] = nextfn
-        self._flowclass_to_flowfsm = defaultdict(
-            lambda : FlowFSM(self.type,self.state,self.next))
-        super(FSMPolicy,self).__init__()
+        self._flec_pred_to_fsm = defaultdict(
+            lambda : FlecFSM(self.type,self.state,self.next))
+        self.initial_policy = self.state['policy']
+        super(FSMPolicy,self).__init__(self.initial_policy)
 
     def event_msg_handler(self,event_msg):
 
@@ -90,7 +109,12 @@ class FSMPolicy(DynamicPolicy):
         event_value = event_msg['value']
         event_flow = frozendict(event_msg['flow'])
         converted_event_flow = { k : convert(k,v) for k,v in event_flow.items() if v }
-        flow_pred = match(converted_event_flow)
-        self._flowclass_to_flowfsm[flow_pred].handle_event(event_name,event_value)
+        flec_pred = match(converted_event_flow)
+
+        new_flec = not flec_pred in self._flec_pred_to_fsm
+        flec_fsm = self._flec_pred_to_fsm[flec_pred]
+        flec_fsm.handle_event(event_name,event_value)
+        if new_flec:
+            self.policy = if_(flec_pred,flec_fsm,self.policy)
 
 

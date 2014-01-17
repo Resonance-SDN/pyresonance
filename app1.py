@@ -28,6 +28,4 @@ def main():
 
     json_event = JSONEvent(fsm_pol.event_msg_handler)            
 
-
-if __name__ == '__main__':
-    main()
+    return fsm_pol
