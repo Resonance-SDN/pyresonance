@@ -7,20 +7,16 @@
 ################################################################################
 
 import ast
+import copy
 
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
 class FlowFSM(DynamicPolicy):
-    def __init__(self, fsm_description):
-        self.type = dict()
-        self.state = dict()
-        self.next = dict()
-        for var_name,state_tuple in fsm_description.items():
-            state_type, init_val, nextfn = state_tuple
-            self.type[var_name] = state_type
-            self.state[var_name] = init_val
-            self.next[var_name] = nextfn
+    def __init__(self,t,s,n):
+        self.type = copy.copy(t)
+        self.state = copy.copy(s)
+        self.next = n
         super(FlowFSM,self).__init__(self.state['policy'])
 
     def handle_event(self,event_name,event_val_str):
@@ -68,10 +64,17 @@ from collections import defaultdict
 class FSMPolicy(DynamicPolicy):
     
     def __init__(self,fsm_description):
-        super(FSMPolicy,self).__init__()
-        self.fsm_description = fsm_description
+        self.type = dict()
+        self.state = dict()
+        self.next = dict()
+        for var_name,state_tuple in fsm_description.items():
+            state_type, init_val, nextfn = state_tuple
+            self.type[var_name] = state_type
+            self.state[var_name] = init_val
+            self.next[var_name] = nextfn
         self._flowclass_to_flowfsm = defaultdict(
-            lambda : FlowFSM(fsm_description))
+            lambda : FlowFSM(self.type,self.state,self.next))
+        super(FSMPolicy,self).__init__()
 
     def event_msg_handler(self,event_msg):
 
