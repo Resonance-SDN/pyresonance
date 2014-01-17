@@ -6,7 +6,7 @@
 # author: Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)                       #
 ################################################################################
 
-from multiprocessing import Process
+from threading import Thread
 import socket
 import SocketServer
 import json
@@ -20,7 +20,7 @@ class JSONEvent():
         self.addr = addr
         self.port = JSONEvent.port
         JSONEvent.port += 1
-        p1 = Process(target=self.event_listener)
+        p1 = Thread(target=self.event_listener)
         p1.start()
         
     def event_listener(self):
