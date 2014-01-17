@@ -2,7 +2,7 @@
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
-from pyretic.pyresonance.fsm_policy import FSMPolicy
+from pyretic.pyresonance.fsm_policy import *
 from pyretic.pyresonance.drivers.json_event import JSONEvent 
 
 def main():
@@ -13,6 +13,7 @@ def main():
         else:
             return identity
 
+    @external_transition
     def infected_next(event):
         return event
 

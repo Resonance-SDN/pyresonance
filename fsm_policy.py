@@ -13,6 +13,12 @@ from collections import defaultdict
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
+class external_transition(object):
+    def __init__(self,fn):
+        self.fn = fn
+
+    def __call__(self,event):
+        return self.fn(event)
 
 # class dependent_transition(object):
 #     def __init__(self):
@@ -20,7 +26,7 @@ from pyretic.lib.std import *
 #                        ...,
 #                        (lambda state : True, identity) ]
 
-#     def eval(self,state):
+#     def __call__(self,state):
 #         for test,ret in self.cases:
 #             if test(state):
 #                 return ret
