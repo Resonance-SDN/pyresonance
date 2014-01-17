@@ -52,17 +52,23 @@ class FlecFSM(DynamicPolicy):
         self.type = copy.copy(t)
         self.state = copy.copy(s)
         self.next = n
+        self._topo_init = False
         super(FlecFSM,self).__init__(self.state['policy'])
 
-    def handle_event(self,event_name,event_val_str):
+    def handle_event(self,event_name,event_val_rep):
         var_name = event_name
         var_type = self.type[var_name]
-        if var_type == bool:
-            event_val = ast.literal_eval(event_val_str)
-        elif var_type == int:
-            event_val = int(event_val_str)
+        if isinstance(event_val_rep,str):
+            if var_type == bool:
+                event_val = ast.literal_eval(event_val_rep)
+            elif var_type == int:
+                event_val = int(event_val_rep)
+            else:
+                raise RuntimeError('not yet implemented')
         else:
-            raise RuntimeError('not yet implemented')
+            event_val = event_val_rep
+            if not isinstance(event_val,var_type):
+                raise RuntimeError('event_val type mismatch (%s,%s)' % (type(event_val),var_type) )
         next_val = self.next[var_name].event_fn(event_val)
         if next_val != self.state[var_name]:
             self.state[var_name] = next_val
@@ -104,9 +110,13 @@ class FlecFSM(DynamicPolicy):
         if 'policy' in changed_vars:
             self.policy = self.state['policy']
 
-#    def set_network(self,network):
-#        if 'topo_change' in self.next:
-#            self.handle_event('topo_change',True)
+    def set_network(self,network):
+        if not self._topo_init:
+            self._topo_init = True
+            return
+
+        if 'topo_change' in self.next:
+            self.handle_event('topo_change',True)
 
     def current_state_string(self):
         return '{' + '\n'.join([str(name) + ' : ' + str(val) for name,val in self.state.items()]) + '}'
