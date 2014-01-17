@@ -8,9 +8,23 @@
 
 import ast
 import copy
+from collections import defaultdict
 
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
+
+
+# class dependent_transition(object):
+#     def __init__(self):
+#         self.cases = [ (lambda state : state['infected'] : drop), 
+#                        ...,
+#                        (lambda state : True, identity) ]
+
+#     def eval(self,state):
+#         for test,ret in self.cases:
+#             if test(state):
+#                 return ret
+            
 
 class FlecFSM(DynamicPolicy):
     def __init__(self,t,s,n):
@@ -26,14 +40,10 @@ class FlecFSM(DynamicPolicy):
             event_val = ast.literal_eval(event_val_str)
         else:
             raise RuntimeError('not yet implemented')
-        print self.state
-        print '-------------'
         next_val = self.next[var_name](event_val)
         if next_val != self.state[var_name]:
             self.state[var_name] = next_val
             self.handle_var_change(var_name)
-        print self.state
-        print '============='
         
     def get_dependent_vars(self,var_name):
         if var_name == 'infected':
@@ -54,29 +64,8 @@ class FlecFSM(DynamicPolicy):
         if 'policy' in changed_vars:
             self.policy = self.state['policy']
 
-    def changed(self):
-        print "%d : %s" % (id(self), str(self.policy))
-        if self.notify:
-            self.notify(self)
-
     def current_state_string(self):
         return '{' + '\n'.join([str(name) + ' : ' + str(val) for name,val in self.state.items()]) + '}'
-
-
-from collections import defaultdict
-
-# class dependent_transition(object):
-#     def __init__(self):
-#         self.cases = [ (lambda state : state['infected'] : drop), 
-#                        ...,
-#                        (lambda state : True, identity) ]
-
-#     def eval(self,state):
-#         for test,ret in self.cases:
-#             if test(state):
-#                 return ret
-            
-
 
 
 class FSMPolicy(DynamicPolicy):
@@ -116,5 +105,3 @@ class FSMPolicy(DynamicPolicy):
         flec_fsm.handle_event(event_name,event_value)
         if new_flec:
             self.policy = if_(flec_pred,flec_fsm,self.policy)
-
-
