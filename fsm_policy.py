@@ -52,6 +52,10 @@ class FlecFSM(DynamicPolicy):
             self.handle_var_change(var_name)
         
     def get_dependent_vars(self,var_name):
+#        THIS SHOULD BE THE NEW LOGIC
+#        return self.next[var_name].get_dependent_vars()
+
+#       GET RID OF THIS HARD-CODED LOGIC
         if var_name == 'infected':
             return { 'policy' }
         else:
