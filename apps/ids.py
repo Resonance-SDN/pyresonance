@@ -23,9 +23,10 @@ def main():
                         'infected' : (bool,
                                       False,
                                       infected_next)   }
+    def flec_relation(f1,f2):
+        return f1['srcip']==f2['srcip']
 
-
-    fsm_pol = FSMPolicy(fsm_description)
+    fsm_pol = FSMPolicy(fsm_description,flec_relation)
 
     json_event = JSONEvent(fsm_pol.event_msg_handler)            
 
