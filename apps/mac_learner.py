@@ -1,13 +1,15 @@
 
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
-from pyretic.lib.query import *
+import pyretic.lib.query as query
 
 from pyretic.pyresonance.fsm_policy import *
 from pyretic.pyresonance.drivers.json_event import JSONEvent 
 
 class resetting_q(DynamicFilter):
-    def __init__(self):
+    def __init__(self,cls,**kwargs):
+        self.cls = cls
+        self.kwargs = kwargs
         super(resetting_q,self).__init__()
         
     def register_callback(self,cb):
@@ -15,7 +17,13 @@ class resetting_q(DynamicFilter):
         self.reset()
             
     def reset(self):        
-        self.policy = packets(1,['srcmac','switch'])
+        # policy = self.cls(self.kwargs)
+        # print type(policy)
+        # print policy
+        # self.policy = policy
+        self.policy = query.packets(limit=1,group_by=['srcmac','switch'])
+        # print type(self.policy)
+        # print self.policy
         self.policy.register_callback(self.callback)
             
     def set_network(self,network):
@@ -53,14 +61,14 @@ class mac_learner(DynamicPolicy):
         fsm_description = { 
             'policy' :      ([],
                              flood(),
-                             next_fns(state_fn=policy_next)),
+                             NextFns(state_fn=policy_next)),
             'port' :        (int,
                              0,
-                             next_fns(state_fn=port_next_state,
+                             NextFns(state_fn=port_next_state,
                                       event_fn=port_next_event)),
             'topo_change' : (bool,
                              False,
-                             next_fns(state_fn=topo_change_next_state,
+                             NextFns(state_fn=topo_change_next_state,
                                       event_fn=topo_change_next_event)) }
 
         ### DEFINE THE FLEC RELATION
@@ -87,7 +95,7 @@ class mac_learner(DynamicPolicy):
 
         fsm_pol = FSMPolicy(fsm_description,flec_relation)
         json_event = JSONEvent()
-        rq = resetting_q()
+        rq = resetting_q(query.packets,limit=1,group_by=['srcmac','switch'])
         json_event.register_callback(fsm_pol.event_handler)
         rq.register_callback(q_callback)
 

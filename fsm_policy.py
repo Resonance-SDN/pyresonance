@@ -2,6 +2,7 @@
 # Resonance Project                                                            #
 # Resonance implemented with Pyretic platform                                  #
 # author: Hyojoon Kim (joonk@gatech.edu)                                       #
+# author: Joshua Reich (jreich@cs.princeton.edu)                               #
 # author: Nick Feamster (feamster@cc.gatech.edu)                               #
 # author: Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)                       #
 ################################################################################
@@ -20,14 +21,7 @@ class Event(object):
         self.value = value
         self.flow = flow
 
-class external_transition(object):
-    def __init__(self,fn):
-        self.fn = fn
-
-    def __call__(self,event):
-        return self.fn(event)
-
-class next_fns(object):
+class NextFns(object):
     def __init__(self,state_fn=None,event_fn=None):
         self.state_fn = state_fn
         self.event_fn = event_fn
@@ -50,7 +44,7 @@ class next_fns(object):
 class FlecFSM(DynamicPolicy):
     def __init__(self,t,s,n):
         self.type = copy.copy(t)
-        self.state = copy.copy(s)
+        self.state = copy.copy(s)  # really variables, but all the variables together are the state
         self.next = n
         self._topo_init = False
         super(FlecFSM,self).__init__(self.state['policy'])
@@ -58,6 +52,8 @@ class FlecFSM(DynamicPolicy):
     def handle_event(self,event_name,event_val_rep):
         var_name = event_name
         var_type = self.type[var_name]
+
+        # make sure event_val is typed correctly
         if isinstance(event_val_rep,str):
             if var_type == bool:
                 event_val = ast.literal_eval(event_val_rep)
@@ -69,10 +65,13 @@ class FlecFSM(DynamicPolicy):
             event_val = event_val_rep
             if not isinstance(event_val,var_type):
                 raise RuntimeError('event_val type mismatch (%s,%s)' % (type(event_val),var_type) )
+
+        # calculate the next value and update, if applicable
         next_val = self.next[var_name].event_fn(event_val)
         if next_val != self.state[var_name]:
             self.state[var_name] = next_val
             self.handle_var_change(var_name)
+
         
     def get_dependent_vars(self,var_name):
 #        THIS SHOULD BE THE NEW LOGIC
@@ -88,6 +87,7 @@ class FlecFSM(DynamicPolicy):
         else:
             return set()
          
+
     def handle_var_change(self,init_var_name):
 
         # cascade the changes
@@ -110,16 +110,19 @@ class FlecFSM(DynamicPolicy):
         if 'policy' in changed_vars:
             self.policy = self.state['policy']
 
+
     def set_network(self,network):
         if not self._topo_init:
             self._topo_init = True
             return
 
+        # topo_change IS A RESERVED NAME!!!
         if 'topo_change' in self.next:
             self.handle_event('topo_change',True)
 
     def current_state_string(self):
         return '{' + '\n'.join([str(name) + ' : ' + str(val) for name,val in self.state.items()]) + '}'
+
 
 
 class FSMPolicy(DynamicPolicy):
@@ -134,7 +137,6 @@ class FSMPolicy(DynamicPolicy):
             self.type[var_name] = state_type
             self.state[var_name] = init_val
             self.next[var_name] = nfs
-        print self.next
         self.flow_to_pred_fsm = defaultdict(
             lambda : (DynamicFilter(), 
                       FlecFSM(self.type,self.state,self.next)))
@@ -166,8 +168,10 @@ class FSMPolicy(DynamicPolicy):
 
         # Events that apply to all flecs
         else:
-            for flec_pred,flec_fsm in set(self.flow_to_pred_fsm.values()):
-                flec_fsm.handle_event(event.name,event.value)
+            with self.lock:
+                for flec_pred,flec_fsm in set(self.flow_to_pred_fsm.values()):
+                    flec_fsm.handle_event(event.name,event.value)
+
 
     def flecize(self,event_flow):
         flec_pred = None
