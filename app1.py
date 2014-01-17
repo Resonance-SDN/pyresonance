@@ -28,4 +28,4 @@ def main():
 
     json_event = JSONEvent(fsm_pol.event_msg_handler)            
 
-    return fsm_pol
+    return fsm_pol >> flood()
