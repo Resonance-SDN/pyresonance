@@ -44,6 +44,8 @@ def main():
     # Parsing and processing
     options, args = op.parse_args()
 
+    flow_str=None
+
     if options.addr is None and options.port is None:
         print 'No IP address or Port information is given. Exiting.'
         return
@@ -54,23 +56,8 @@ def main():
         print 'No event value provided. Exiting.'
         return
 
-    # Parse flow      
-    flow_str = ''
-    flow_dict = dict(inport=None,
-                     srcmac=None,
-                     dstmac=None,
-                     srcip=None,
-                     dstip=None,
-                     tos=None,
-                     srcport=None,
-                     dstport=None,
-                     ethtype=None, 
-                     protocol=None,
-                     vlan_id=None, 
-                     vlan_pcp=None)
-
     # Open file if specified
-    if options.file and options.flow_tuple:
+    elif options.file and options.flow_tuple:
         print 'Can only specify one of (file,flow_tuple)'
         return
 
@@ -84,19 +71,37 @@ def main():
             
         content = fd.read()
         flow_str = content
+
     elif options.flow_tuple:
         flow_str = options.flow_tuple
+
+    if flow_str:
+        # Parse flow      
+        flow_dict = dict(
+            switch=None,
+            inport=None,
+            srcmac=None,
+            dstmac=None,
+            srcip=None,
+            dstip=None,
+            tos=None,
+            srcport=None,
+            dstport=None,
+            ethtype=None, 
+            protocol=None,
+            vlan_id=None, 
+            vlan_pcp=None)
+        
+        parse_flow_str(flow_dict, flow_str)
+
+        # Construct JSON message
+        json_message = dict(name=options.event_name,
+                            value=options.event_value,
+                            flow=flow_dict)
     else:
-        print 'Need either flow_tuple or file'
-        return
-
-    parse_flow_str(flow_dict, flow_str)
-
-    
-    # Construct JSON message
-    json_message = dict(name=options.event_name,
-                        value=options.event_value,
-                        flow=flow_dict)
+        # Construct JSON message
+        json_message = dict(name=options.event_name,
+                            value=options.event_value)
 
     # Create socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

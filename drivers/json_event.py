@@ -11,12 +11,15 @@ import socket
 import SocketServer
 import json
 
+from pyretic.lib.corelib import *
+from pyretic.pyresonance.fsm_policy import Event
+
 class JSONEvent():
 
     port = 50001
     
-    def __init__(self, handler, addr='127.0.0.1'):
-        self.handler = handler
+    def __init__(self, addr='127.0.0.1'):
+        self.handler = None
         self.addr = addr
         self.port = JSONEvent.port
         JSONEvent.port += 1
@@ -24,6 +27,9 @@ class JSONEvent():
         p1.daemon = True
         p1.start()
         
+    def register_callback(self,handler):
+        self.handler = handler
+
     def event_listener(self):
 
         def parse_json(data):
@@ -67,7 +73,27 @@ class JSONEvent():
                 message = message + data
                 unicode_dict = parse_json(message)
                 ascii_dict = unicode_dict_to_ascii(unicode_dict)
-                self.handler(ascii_dict)
+
+                def convert(field,value):
+                    if field == 'srcip' or field == 'dstip':
+                        return IPAddr(value)
+                    elif field == 'srcmac' or field == 'dstmac':
+                        return EthAddr(value)
+                    else:
+                        return int(value)
+
+                name = ascii_dict['name']
+                value = ascii_dict['value']
+                if not 'flow' in ascii_dict:
+                    flow = None
+                else:
+                    flow = frozendict(
+                        { k : convert(k,v) for 
+                          k,v in ascii_dict['flow'].items() 
+                          if v } )
+            
+                if self.handler:
+                    self.handler(Event(name,value,flow))
                 return_value = 'ok'
                 conn.sendall(return_value)
 

@@ -14,6 +14,12 @@ from threading import Lock
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
+class Event(object):
+    def __init__(self,name,value,flow):
+        self.name = name
+        self.value = value
+        self.flow = flow
+
 class external_transition(object):
     def __init__(self,fn):
         self.fn = fn
@@ -21,6 +27,14 @@ class external_transition(object):
     def __call__(self,event):
         return self.fn(event)
 
+class next_fns(object):
+    def __init__(self,state_fn=None,event_fn=None):
+        self.state_fn = state_fn
+        self.event_fn = event_fn
+        print id(self)
+        print state_fn
+        print event_fn
+        
 # class dependent_transition(object):
 #     def __init__(self):
 #         self.cases = [ (lambda state : state['infected'] : drop), 
@@ -45,9 +59,11 @@ class FlecFSM(DynamicPolicy):
         var_type = self.type[var_name]
         if var_type == bool:
             event_val = ast.literal_eval(event_val_str)
+        elif var_type == int:
+            event_val = int(event_val_str)
         else:
             raise RuntimeError('not yet implemented')
-        next_val = self.next[var_name](event_val)
+        next_val = self.next[var_name].event_fn(event_val)
         if next_val != self.state[var_name]:
             self.state[var_name] = next_val
             self.handle_var_change(var_name)
@@ -59,21 +75,38 @@ class FlecFSM(DynamicPolicy):
 #       GET RID OF THIS HARD-CODED LOGIC
         if var_name == 'infected':
             return { 'policy' }
+        elif var_name == 'port' : 
+            return {'policy'}
+        elif var_name == 'topo_change':
+            return {'port'}
         else:
             return set()
          
     def handle_var_change(self,init_var_name):
+
+        # cascade the changes
         changed_vars = { init_var_name }
         dependent_vars = self.get_dependent_vars(init_var_name)
         while len(dependent_vars) > 0:
             var_name = dependent_vars.pop()
-            next_val = self.next[var_name](self.state)
+            next_val = self.next[var_name].state_fn(self.state)
             if next_val != self.state[var_name]:
                 self.state[var_name] = next_val
                 dependent_vars |= self.get_dependent_vars(var_name)
                 changed_vars.add(var_name)
+
+        # change initial variable, if appropriate
+        next_val = self.next[init_var_name].state_fn(self.state)
+        if next_val != self.state[init_var_name]:
+            self.state[init_var_name] = next_val
+
+        # update policy, if appropriate
         if 'policy' in changed_vars:
             self.policy = self.state['policy']
+
+#    def set_network(self,network):
+#        if 'topo_change' in self.next:
+#            self.handle_event('topo_change',True)
 
     def current_state_string(self):
         return '{' + '\n'.join([str(name) + ' : ' + str(val) for name,val in self.state.items()]) + '}'
@@ -87,10 +120,11 @@ class FSMPolicy(DynamicPolicy):
         self.next = dict()
         self.flec_relation = flec_relation
         for var_name,state_tuple in fsm_description.items():
-            state_type, init_val, nextfn = state_tuple
+            state_type, init_val, nfs = state_tuple
             self.type[var_name] = state_type
             self.state[var_name] = init_val
-            self.next[var_name] = nextfn
+            self.next[var_name] = nfs
+        print self.next
         self.flow_to_pred_fsm = defaultdict(
             lambda : (DynamicFilter(), 
                       FlecFSM(self.type,self.state,self.next)))
@@ -98,40 +132,32 @@ class FSMPolicy(DynamicPolicy):
         self.lock = Lock()
         super(FSMPolicy,self).__init__(self.initial_policy)
 
-    def event_msg_handler(self,event_msg):
 
-        def convert(field,value):
-            if field == 'srcip' or field == 'dstip':
-                return IPAddr(value)
-            elif field == 'srcmac' or field == 'dstmac':
-                return EthAddr(value)
-            else:
-                return int(value)
+    def event_handler(self,event):
 
-        event_name = event_msg['name']
-        event_value = event_msg['value']
-        event_flow = frozendict(event_msg['flow'])
-        event_flow = frozendict(
-            { k : convert(k,v) for 
-              k,v in event_flow.items() if v })
-        
-        try:
-            self.flec_relation(event_flow,event_flow)
-        except KeyError:
-            print 'Error: event flow must contain all fields used in flec_relation.  Ignoring.'
-            return
+        # Events that apply to a single flec
+        if event.flow:
+            try:
+                self.flec_relation(event.flow,event.flow)
+            except KeyError:
+                print 'Error: event flow must contain all fields used in flec_relation.  Ignoring.'
+                return
 
-        with self.lock:
-            # get the flec objects from the flow
-            flec_pred,flec_fsm,flec_new = self.flecize(event_flow)
+            with self.lock:
+                # get the flec objects from the flow
+                flec_pred,flec_fsm,flec_new = self.flecize(event.flow)
 
-            # have the flec_fsm handle the event
-            flec_fsm.handle_event(event_name,event_value)
+                # have the flec_fsm handle the event
+                flec_fsm.handle_event(event.name,event.value)
 
-            # if the flec is new, update the policy
-            if flec_new:
-                self.policy = if_(flec_pred,flec_fsm,self.policy)
+                # if the flec is new, update the policy
+                if flec_new:
+                    self.policy = if_(flec_pred,flec_fsm,self.policy)
 
+        # Events that apply to all flecs
+        else:
+            for flec_pred,flec_fsm in set(self.flow_to_pred_fsm.values()):
+                flec_fsm.handle_event(event.name,event.value)
 
     def flecize(self,event_flow):
         flec_pred = None

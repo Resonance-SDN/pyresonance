@@ -24,7 +24,8 @@ def main():
                                       False,
                                       infected_next)   }
     def flec_relation(f1,f2):
-        return f1['srcip']==f2['srcip']
+        return (f1['srcip']==f2['srcip'] and
+                f1['dstip']==f2['dstip'])
 
     fsm_pol = FSMPolicy(fsm_description,flec_relation)
 
