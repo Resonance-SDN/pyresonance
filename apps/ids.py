@@ -7,28 +7,36 @@ from pyretic.pyresonance.drivers.json_event import JSONEvent
 
 def main():
 
+    # Policy state 
     def policy_next(state):
         if state['infected']:
             return drop
         else:
             return identity
 
-    @external_transition
+    # Event state
     def infected_next(event):
         return event
 
-    fsm_description = { 'policy' : ([drop,identity],
-                                    identity,
-                                    policy_next),
-                        'infected' : (bool,
-                                      False,
-                                      infected_next)   }
+    # FSM description        
+    fsm_description = { 
+        'policy'   : ([drop,identity],
+                      identity,
+                      NextFns(state_fn=policy_next)),
+        'infected' : (bool, 
+                      False, 
+                      NextFns(state_fn=infected_next,
+                        event_fn=infected_next)) } 
+
+    # Flec relation 
     def flec_relation(f1,f2):
         return (f1['srcip']==f2['srcip'] and
                 f1['dstip']==f2['dstip'])
 
+    # Instantiate FSMPolicy, start/register JSON handler.
     fsm_pol = FSMPolicy(fsm_description,flec_relation)
+    json_event = JSONEvent()
+    json_event.register_callback(fsm_pol.event_handler)
 
-    json_event = JSONEvent(fsm_pol.event_msg_handler)            
-
+    # Return policy
     return fsm_pol >> flood()

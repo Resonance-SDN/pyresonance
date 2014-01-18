@@ -53,19 +53,20 @@ class Server_LB( Topo ):
     h2 = self.addHost( 'h2' )
     h3 = self.addHost( 'h3' )
     h4 = self.addHost( 'h4' )
+    h5 = self.addHost( 'h5' )
 
     s1 = self.addSwitch( 's1' )
     s2 = self.addSwitch( 's2' )
-    s3 = self.addSwitch( 's3' )
 
     # Add links
     self.addLink( h1, s1 )
-    self.addLink( h2, s2 )
-    self.addLink( h3, s2, delay='100ms')
-    self.addLink( h4, s3 )
+    self.addLink( h2, s1 )
+
+    self.addLink( h3, s2, delay='50ms')
+    self.addLink( h4, s2, delay='100ms' )
+    self.addLink( h5, s2, delay='150ms' )
     
     self.addLink( s1, s2 )
-    self.addLink( s2, s3)
 
 
 class Ratelimit( Topo ):

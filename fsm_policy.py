@@ -25,9 +25,9 @@ class NextFns(object):
     def __init__(self,state_fn=None,event_fn=None):
         self.state_fn = state_fn
         self.event_fn = event_fn
-        print id(self)
-        print state_fn
-        print event_fn
+#        print id(self)
+#        print state_fn
+#        print event_fn
         
 # class dependent_transition(object):
 #     def __init__(self):
@@ -84,6 +84,8 @@ class FlecFSM(DynamicPolicy):
             return {'policy'}
         elif var_name == 'topo_change':
             return {'port'}
+        elif var_name == 'server':
+            return {'policy'}
         else:
             return set()
          
