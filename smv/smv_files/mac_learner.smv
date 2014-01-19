@@ -12,9 +12,11 @@ MODULE main
         port=0            : 0..2;
         TRUE              : port;
       esac;
+  FAIRNESS
+    topo_change;
   SPEC AG (port=0 -> AG EF port>0)
-  SPEC AG (port>0 -> ( (A [ port>0 U topo_change ] ) | (EG port>0) ))
-  SPEC ! AG ((A [ port>0 U topo_change ] ) | (EG port>0) )
-  SPEC AG (port=1 -> ( (A [ port=1 U topo_change ] ) | (EG port=1) ))
-  SPEC ! AG (port=2 -> ( (A [ port=1 U topo_change ] ) | (EG port=1) ))
+  SPEC ! AG A [ port>0 U topo_change ]
+  SPEC AG (port>0 -> A [ port>0 U topo_change ] )
+  SPEC AG (port=1 -> A [ port=1 U topo_change ] )
+  SPEC ! AG (port=2 -> A [ port=1 U topo_change ] )
 
