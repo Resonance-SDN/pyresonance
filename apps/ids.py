@@ -4,6 +4,7 @@ from pyretic.lib.std import *
 
 from pyretic.pyresonance.fsm_policy import *
 from pyretic.pyresonance.drivers.json_event import JSONEvent 
+from pyretic.pyresonance.smv.translate import *
 
 def main():
 
@@ -37,6 +38,9 @@ def main():
     fsm_pol = FSMPolicy(fsm_description,flec_relation)
     json_event = JSONEvent()
     json_event.register_callback(fsm_pol.event_handler)
+
+    # For NuSMV
+    mc = ModelChecker(fsm_description, 'ids')  
 
     # Return policy
     return fsm_pol >> flood()

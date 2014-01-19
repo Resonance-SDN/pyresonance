@@ -5,6 +5,7 @@ import pyretic.lib.query as query
 
 from pyretic.pyresonance.fsm_policy import *
 from pyretic.pyresonance.drivers.json_event import JSONEvent 
+from pyretic.pyresonance.smv.translate import *
 
 class resetting_q(DynamicFilter):
     def __init__(self,cls,**kwargs):
@@ -98,6 +99,9 @@ class mac_learner(DynamicPolicy):
         rq = resetting_q(query.packets,limit=1,group_by=['srcmac','switch'])
         json_event.register_callback(fsm_pol.event_handler)
         rq.register_callback(q_callback)
+
+        # For NuSMV
+#        mc = ModelChecker(fsm_description, 'mac_learner')  
 
         super(mac_learner,self).__init__(fsm_pol + rq)
 
