@@ -11,6 +11,9 @@ import ast
 import copy
 from collections import defaultdict
 from threading import Lock
+import re
+import inspect
+import textwrap
 
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
@@ -59,7 +62,6 @@ class FlecFSM(DynamicPolicy):
             self.state[var_name] = next_val
             self.handle_var_change(var_name)
 
-        
     def get_dependent_vars(self,var_name):
 #        THIS SHOULD BE THE NEW LOGIC
 #        return self.next[var_name].get_dependent_vars()
@@ -122,11 +124,23 @@ class FSMPolicy(DynamicPolicy):
         self.state = dict()
         self.next = dict()
         self.flec_relation = flec_relation
+
+        # def get_deps(nfs):
+        #     nf_event = nfs.event_fn
+        #     nf_state = nfs.state_fn
+            
+        #     def fn_deps(fn):
+        #         fn_src = inspect.getsource(fn)  
+        #         fn_src = textwrap.dedent(fn_src)
+ 
+        #         print re.findall(r'\bv\w+', thesentence)
+                
         for var_name,state_tuple in fsm_description.items():
             state_type, init_val, nfs = state_tuple
             self.type[var_name] = state_type
             self.state[var_name] = init_val
             self.next[var_name] = nfs
+        #    self.dep[var_name] = get_deps(nfs)
         self.flow_to_pred_fsm = defaultdict(
             lambda : (DynamicFilter(), 
                       FlecFSM(self.type,self.state,self.next)))
