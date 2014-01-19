@@ -19,4 +19,9 @@ MODULE main
   SPEC AG (port>0 -> A [ port>0 U topo_change ] )
   SPEC AG (port=1 -> A [ port=1 U topo_change ] )
   SPEC ! AG (port=2 -> A [ port=1 U topo_change ] )
-
+  SPEC ! AG (port=1 -> EX port=2)
+  SPEC AG (port=1 -> EF port=2)
+  SPEC AG (port=1 -> A [ !(port=2) U port=0 ])
+  SPEC AG (port=1 -> A [ !(port=2) U topo_change ])
+  SPEC AG (port=1 -> EX port=1)
+  SPEC AG (port=1 -> EX port=0)
