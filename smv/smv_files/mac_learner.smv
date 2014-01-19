@@ -1,0 +1,20 @@
+MODULE main
+  VAR
+    topo_change : boolean;
+    port : 0..2;
+  ASSIGN
+    init(port) := 0;
+    init(topo_change) := FALSE;
+    next(port) := 
+      case
+        topo_change       : 0;
+        next(topo_change) : 0;
+        port=0            : 0..2;
+        TRUE              : port;
+      esac;
+  SPEC AG (port=0 -> AG EF port>0)
+  SPEC AG (port>0 -> ( (A [ port>0 U topo_change ] ) | (EG port>0) ))
+  SPEC ! AG ((A [ port>0 U topo_change ] ) | (EG port>0) )
+  SPEC AG (port=1 -> ( (A [ port=1 U topo_change ] ) | (EG port=1) ))
+  SPEC ! AG (port=2 -> ( (A [ port=1 U topo_change ] ) | (EG port=1) ))
+

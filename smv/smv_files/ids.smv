@@ -1,0 +1,17 @@
+MODULE main
+  VAR
+    policy : {drop,identity};
+    infected : boolean;
+  ASSIGN
+   init(policy) := identity;
+   init(infected) := FALSE;
+   next(policy) := 
+     case
+       infected  : drop;
+       !infected : identity;
+     esac;
+  SPEC infected -> (policy=drop)
+  SPEC !infected -> policy=identity
+  SPEC AG EF policy=identity
+  SPEC AG EF policy=drop
+  SPEC EF A [ policy=identity U infected ]
