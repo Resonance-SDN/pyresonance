@@ -102,11 +102,12 @@ class FlecFSM(DynamicPolicy):
                 self.state[var_name] = next_val
                 dependent_vars |= self.get_dependent_vars(var_name)
                 changed_vars.add(var_name)
-
+                
         # change initial variable, if appropriate
-        next_val = self.next[init_var_name].state_fn(self.state)
-        if next_val != self.state[init_var_name]:
-            self.state[init_var_name] = next_val
+        if self.next[init_var_name].state_fn:
+            next_val = self.next[init_var_name].state_fn(self.state)
+            if next_val != self.state[init_var_name]:
+                self.state[init_var_name] = next_val
 
         # update policy, if appropriate
         if 'policy' in changed_vars:
