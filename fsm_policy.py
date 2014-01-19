@@ -21,25 +21,12 @@ class Event(object):
         self.value = value
         self.flow = flow
 
+
 class NextFns(object):
     def __init__(self,state_fn=None,event_fn=None):
         self.state_fn = state_fn
         self.event_fn = event_fn
-#        print id(self)
-#        print state_fn
-#        print event_fn
         
-# class dependent_transition(object):
-#     def __init__(self):
-#         self.cases = [ (lambda state : state['infected'] : drop), 
-#                        ...,
-#                        (lambda state : True, identity) ]
-
-#     def __call__(self,state):
-#         for test,ret in self.cases:
-#             if test(state):
-#                 return ret
-            
 
 class FlecFSM(DynamicPolicy):
     def __init__(self,t,s,n):

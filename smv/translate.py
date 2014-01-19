@@ -10,10 +10,13 @@
 
 import subprocess
 import platform
+import os
 
 class ModelChecker(object):
     
-    def __init__(self, fsm_desc, filename):
+    def __init__(self, policy):
+        filename = policy.name()
+        fsm_desc = policy.fsm_description 
         arch_str = platform.architecture()
         if arch_str:
             if arch_str[0].startswith('32'):  
@@ -23,7 +26,9 @@ class ModelChecker(object):
         self.smv_file_directory = './smv/smv_files/'
 
         # Translate and create smv file
-        path_to_file = self.translate_to_smv_file(fsm_desc, filename)
+#        path_to_file = self.translate_to_smv_file(fsm_desc, filename)
+
+        path_to_file = os.path.join(self.smv_file_directory,filename+'.smv')
 
         # Feed into nusmv
         self.feed_to_nusmv(path_to_file)
@@ -33,10 +38,10 @@ class ModelChecker(object):
         smv_str = "MODULE main\n"
         
         ## VAR and INIT ##
-        var_init_str = self.var_and_init(fsm_desc, filename)
+        var_init_str = self.var_and_init(fsm_desc)
 
         # Transition
-        transition_str =  self.get_transition_relation()
+        transition_str =  self.get_transition_relation(fsm_desc)
 
         ### SPEC ###
         spec_str = "\n"
@@ -52,12 +57,12 @@ class ModelChecker(object):
         return path_to_file
 
 
-    def var_and_init(self, fsm_desc, filename):
-        ### VAR section ###
+    def var_and_init(self, fsm_desc):
+         ### VAR section ###
         var_str = "VAR\n"
         state_init_dict = {}
-        for var in fsm_desc:
-            state_type, init_value, next_fn = fsm_desc[var]
+        for var, props in fsm_desc.items():
+            state_type, init_value, next_fn = props
 
             # Type boolean
             if state_type == bool:
@@ -90,17 +95,35 @@ class ModelChecker(object):
         return var_str + assign_str
 
 
-    def get_transition_relation(self):
-        transiton_str = ""
-#        (state_name, next_state_value, depend_event_name, depend_event_value)
+    # def get_transition_relation(self, fsm_desc):
 
-#        assign_str  = assign_str + ' next(' +    
+    #     def foo(fn):
+    #         if not fn:
+    #             return
 
-        # default  transition
-#        assign_str = assign_str + '    TRUE : ' + var_name + ';\nesac;\n'
+    #         print '-------------'
+    #         print fn
+    #         for test,ret in fn.cases:
+    #             print 'test'
+    #             print test
+    #             print 'ret'
+    #             print ret
+            
+    #         # fn_src = inspect.getsource(fn)
+    #         # fn_src = textwrap.dedent(fn_src)
+    #         # print fn_src
+    #         # fn_ast = ast.parse(fn_src)
+    #         # print fn_ast
+    #         # print ast.dump(fn_ast)
 
+    #     for var, props in fsm_desc.items():
+    #         state_type, init_value, next_fn = props
 
-        return transiton_str
+    #         foo(next_fn.event_fn)
+    #         foo(next_fn.state_fn)
+
+    #     return transiton_str
+
 
     def feed_to_nusmv(self, path_to_file):
         p = subprocess.Popen([self.exec_cmd, '-r', path_to_file], stdout=subprocess.PIPE) 
