@@ -157,6 +157,9 @@ class FSMPolicy(DynamicPolicy):
                 print 'Error: event flow must contain all fields used in flec_relation.  Ignoring.'
                 return
 
+            if flec is None:
+                return
+
             # DynamicPolicies can't be hashed
             # still need to implement hashing for static policies
             # in meantime, use string representation of the cannonical flec
