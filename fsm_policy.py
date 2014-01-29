@@ -119,11 +119,11 @@ class FlecFSM(DynamicPolicy):
 
 class FSMPolicy(DynamicPolicy):
     
-    def __init__(self,fsm_description,flec_relation):
+    def __init__(self,flec_fn,fsm_description):
         self.type = dict()
         self.state = dict()
         self.next = dict()
-        self.flec_relation = flec_relation
+        self.flec_fn = flec_fn
 
         # def get_deps(nfs):
         #     nf_event = nfs.event_fn
@@ -141,9 +141,7 @@ class FSMPolicy(DynamicPolicy):
             self.state[var_name] = init_val
             self.next[var_name] = nfs
         #    self.dep[var_name] = get_deps(nfs)
-        self.flow_to_pred_fsm = defaultdict(
-            lambda : (DynamicFilter(), 
-                      FlecFSM(self.type,self.state,self.next)))
+        self.flec_to_fsm = dict()
         self.initial_policy = self.state['policy']
         self.lock = Lock()
         super(FSMPolicy,self).__init__(self.initial_policy)
@@ -154,58 +152,29 @@ class FSMPolicy(DynamicPolicy):
         # Events that apply to a single flec
         if event.flow:
             try:
-                self.flec_relation(event.flow,event.flow)
+                flec = self.flec_fn(event.flow)
             except KeyError:
                 print 'Error: event flow must contain all fields used in flec_relation.  Ignoring.'
                 return
 
             with self.lock:
                 # get the flec objects from the flow
-                flec_pred,flec_fsm,flec_new = self.flecize(event.flow)
+                if flec in self.flec_to_fsm:
+                    flec_new = False
+                else:
+                    self.flec_to_fsm[flec] = FlecFSM(self.type,self.state,self.next)
+                    flec_new = True
 
                 # have the flec_fsm handle the event
+                flec_fsm = self.flec_to_fsm[flec]
                 flec_fsm.handle_event(event.name,event.value)
 
                 # if the flec is new, update the policy
                 if flec_new:
-                    self.policy = if_(flec_pred,flec_fsm,self.policy)
+                    self.policy = if_(flec,flec_fsm,self.policy)
 
         # Events that apply to all flecs
         else:
             with self.lock:
-                for flec_pred,flec_fsm in set(self.flow_to_pred_fsm.values()):
+                for flec_fsm in self.flec_to_fsm.values():
                     flec_fsm.handle_event(event.name,event.value)
-
-
-    def flecize(self,event_flow):
-        flec_pred = None
-        flec_fsm = None
-        flec_new = False
-
-        flow_pred = match(event_flow)
-
-        # if the event flow isn't a key
-        if not event_flow in self.flow_to_pred_fsm:
-            # then check all keys to see if any are in same flec
-            for f in self.flow_to_pred_fsm.keys():
-                # there is already a FlecFSM for event_flow
-                if self.flec_relation(event_flow,f):
-                    flec_pred,flec_fsm = self.flow_to_pred_fsm[f]
-                    flec_pred.policy |= flow_pred
-                    self.flow_to_pred_fsm[event_flow] = (flec_pred,flec_fsm)
-                    break
-
-            # we are initializing a FlecFSM
-            if flec_pred is None:
-                flec_pred,flec_fsm = self.flow_to_pred_fsm[event_flow]
-                flec_pred.policy |= flow_pred
-                flec_new = True
-
-        else:
-            flec_pred,flec_fsm = self.flow_to_pred_fsm[event_flow]
-
-        # INVARIANTS: 
-        # - flec_pred matches all event_flows in the flec received thus far
-        # - flec_fsm is the canonical FlecFSM for event_flow
-        # - flec_new is True if this is the first event_flow in the flec recieved thus far
-        return (flec_pred,flec_fsm,flec_new)

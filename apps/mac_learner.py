@@ -10,6 +10,12 @@ from pyretic.pyresonance.smv.translate import *
 class mac_learner(DynamicPolicy):
     def __init__(self):
 
+        ### DEFINE THE FLEC FUNCTION
+
+        def flec_fn(f):
+            return match(dstmac=f['dstmac'],
+                         switch=f['switch'])
+
         ## SET UP TRANSITION FUNCTIONS
 
         def port_next_state(state):
@@ -48,12 +54,6 @@ class mac_learner(DynamicPolicy):
                              flood(),
                              NextFns(state_fn=policy_next))}
 
-        ### DEFINE THE FLEC RELATION
-
-        def flec_relation(f1,f2):
-            return (f1['dstmac']==f2['dstmac'] and
-                    f1['switch']==f2['switch'])
-
         ### DEFINE QUERY CALLBACKS
 
         def q_callback(pkt):
@@ -65,7 +65,7 @@ class mac_learner(DynamicPolicy):
 
         ### SET UP POLICY AND EVENT STREAMS
 
-        fsm_pol = FSMPolicy(self.fsm_description,flec_relation)
+        fsm_pol = FSMPolicy(flec_fn,self.fsm_description)
         rq = resetting_q(query.packets,limit=1,group_by=['srcmac','switch'])
         rq.register_callback(q_callback)
 

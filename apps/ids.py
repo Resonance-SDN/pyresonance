@@ -10,6 +10,11 @@ from pyretic.pyresonance.smv.translate import *
 class ids(DynamicPolicy):
     def __init__(self):
 
+       ### DEFINE THE FLEC FUNCTION
+
+        def flec_fn(f):
+            return match(srcip=f['srcip'])
+
         ## SET UP TRANSITION FUNCTIONS
 
         def infected_next(event):
@@ -31,14 +36,9 @@ class ids(DynamicPolicy):
                           identity,
                           NextFns(state_fn=policy_next)) }
 
-       ### DEFINE THE FLEC RELATION
-
-        def flec_relation(f1,f2):
-            return (f1['srcip']==f2['srcip'])
-
         ### SET UP POLICY AND EVENT STREAMS
 
-        fsm_pol = FSMPolicy(self.fsm_description,flec_relation)
+        fsm_pol = FSMPolicy(flec_fn,self.fsm_description)
         json_event = JSONEvent()
         json_event.register_callback(fsm_pol.event_handler)
 
