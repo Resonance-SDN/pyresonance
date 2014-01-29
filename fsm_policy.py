@@ -157,16 +157,21 @@ class FSMPolicy(DynamicPolicy):
                 print 'Error: event flow must contain all fields used in flec_relation.  Ignoring.'
                 return
 
+            # DynamicPolicies can't be hashed
+            # still need to implement hashing for static policies
+            # in meantime, use string representation of the cannonical flec
+            flec_k = repr(flec)  
+
             with self.lock:
                 # get the flec objects from the flow
-                if flec in self.flec_to_fsm:
+                if flec_k in self.flec_to_fsm:
                     flec_new = False
                 else:
-                    self.flec_to_fsm[flec] = FlecFSM(self.type,self.state,self.next)
+                    self.flec_to_fsm[flec_k] = FlecFSM(self.type,self.state,self.next)
                     flec_new = True
 
                 # have the flec_fsm handle the event
-                flec_fsm = self.flec_to_fsm[flec]
+                flec_fsm = self.flec_to_fsm[flec_k]
                 flec_fsm.handle_event(event.name,event.value)
 
                 # if the flec is new, update the policy
