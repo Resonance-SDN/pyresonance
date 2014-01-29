@@ -18,6 +18,12 @@ class mac_learner(DynamicPolicy):
 
         ## SET UP TRANSITION FUNCTIONS
 
+        def topo_change_next_state(state):
+            return False
+
+        def topo_change_next_event(event):
+            return True
+
         def port_next_state(state):
             if state['topo_change']:
                 return 0
@@ -26,12 +32,6 @@ class mac_learner(DynamicPolicy):
 
         def port_next_event(event):
             return event
-
-        def topo_change_next_state(state):
-            return False
-
-        def topo_change_next_event(event):
-            return True
 
         def policy_next(state):
             if state['port'] == 0:
