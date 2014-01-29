@@ -10,8 +10,8 @@ MODULE main
        infected  : drop;
        !infected : identity;
      esac;
-  SPEC infected -> (policy=drop)
-  SPEC !infected -> policy=identity
+  SPEC AG infected -> (policy=drop)
+  SPEC AG !infected -> policy=identity
   SPEC AG EF policy=identity
   SPEC AG EF policy=drop
   SPEC EF A [ policy=identity U infected ]
