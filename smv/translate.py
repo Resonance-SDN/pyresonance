@@ -1,13 +1,3 @@
-################################################################################
-# Resonance Project                                                            #
-# Resonance implemented with Pyretic platform                                  #
-# author: Hyojoon Kim (joonk@gatech.edu)                                       #
-# author: Joshua Reich (jreich@cs.princeton.edu)                               #
-# author: Nick Feamster (feamster@cc.gatech.edu)                               #
-# author: Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)                       #
-################################################################################
-
-
 import subprocess
 import platform
 import os

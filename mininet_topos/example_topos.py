@@ -1,8 +1,3 @@
-################################################################################
-# Mininet Custom Topologies                                                    #
-# author: Hyojoon Kim (joonk@gatech.edu)                                       #
-################################################################################
-
 from mininet.topo import Topo
 from mininet.net import Mininet
 from mininet.node import RemoteController   

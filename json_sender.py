@@ -1,14 +1,5 @@
 #!/usr/bin/env python
 
-################################################################################
-# Resonance Project                                                            #
-# Resonance implemented with Pyretic platform                                  #
-# author: Hyojoon Kim (joonk@gatech.edu)                                       #
-# author: Nick Feamster (feamster@cc.gatech.edu)                               #
-# author: Arpit Gupta (glex.qsd@gmail.com)                                     #
-# author: Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)                       #
-################################################################################
-
 from optparse import OptionParser
 import socket
 import sys

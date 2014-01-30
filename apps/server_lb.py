@@ -13,7 +13,7 @@ from pyretic.pyresonance.smv.translate import *
 class serverlb(DynamicPolicy):
     def __init__(self):
 
-        # Server list.  TODO: read from file? argument?
+        # Server list.
         self.servers = {'10.0.0.3': '00:00:00:00:00:03',
                    '10.0.0.4': '00:00:00:00:00:04', 
                    '10.0.0.5': '00:00:00:00:00:05'}
@@ -37,11 +37,12 @@ class serverlb(DynamicPolicy):
  
             return rewrite_ip_policy >> rewrite_mac_policy
     
-    
+
         # Rewrite IP address.
         def rewrite(d,p):
             return intersection([subs(c,r,p) for c,r in d])
     
+
         # subroutine of rewrite()
         def subs(c,r,p):
             c_to_p = match(srcip=c,dstip=p)
@@ -49,9 +50,15 @@ class serverlb(DynamicPolicy):
             return ((c_to_p >> modify(dstip=r))+(r_to_c >> modify(srcip=p))+(~r_to_c >> ~c_to_p))
         
     
+
+       ### DEFINE THE FLEC FUNCTION
+
         def flec_fn(f):
             return match(srcip=f['srcip'])
  
+            
+        ## SET UP TRANSITION FUNCTIONS
+
         def server_next(event):
             return event
     
@@ -61,8 +68,9 @@ class serverlb(DynamicPolicy):
             else:
                 return randomly_choose_server(self.servers)
 
+
+        ### SET UP THE FSM DESCRIPTION
     
-        # Description of FSM     
         self.fsm_description = { 
           'server' : (bool,
                       False,
@@ -78,6 +86,7 @@ class serverlb(DynamicPolicy):
         json_event.register_callback(fsm_pol.event_handler)
         
         super(serverlb,self).__init__(fsm_pol)
+
 
 def main():
     pol = serverlb()

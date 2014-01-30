@@ -1,9 +1,4 @@
-# Author: Arpit Gupta (glex.qsd@gmail.com)
-# Simple program to list all the file in a directory and calculate the line numbers
-# Line number calculation will avoid 'empty lines' and 'comments'
-#
-
-import os,sys
+import os,sys,re
 ofile = open('lines.txt','w+')
 
 def getlines(dirs):
@@ -11,20 +6,49 @@ def getlines(dirs):
     ln=0
     ifile = open(dirs,'r')
     flag = 0
+    main_flag = 0
+    comma_flag = 0
     for line in ifile.readlines():
         ln+=1
-        if flag== 0:
+        if flag== 0 and main_flag == 0:
             line = line.strip(' ')
-            if line.startswith('#') or line =='\n' or line.startswith('"""'):
-                if line.startswith('"""'):
+            match_1 = re.match('(from .* )*import ',line)
+            match_2 = re.search(',\s*$',line)
+            if line.startswith('#') or line =='\n' or line.startswith('"""') or line.startswith("'''"):
+                if line.startswith('"""') or line.startswith("'''"):
                     if line.count('"""')!=2:
                         flag=1
                         #continue
+            elif line.startswith('def main') or line.startswith('def launch'):
+                main_flag=1
+                continue
+
+            # import statements                    
+            elif match_1:
+                continue
+
+            elif match_2:
+                comma_flag = 1
+                continue
+
             else:
                 n+=1
-        else:
-            if '"""' in line:
+                print line
+        elif main_flag == 1:
+            if line.startswith('def ') or line.startswith('class '):
+                main_flag=0
+        elif comma_flag == 1:
+            match_3 = re.search(',\s*$',line)
+            if match_3 is None:
+                print line
+                n+=1
+                comma_flag = 0
+
+        elif flag ==1:
+            if '"""' in line or "'''" in line:
                 flag=0
+        else:
+            print 'what?'
 
     return n
 
