@@ -1,11 +1,5 @@
 #!/bin/bash
 
-################################################################################
-# Resonance Project                                                            #
-# Resonance implemented with Pyretic platform                                  #
-# author: Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)                       #
-################################################################################
-
 case "$1" in
    start)
       echo "Starting Open vSwitch ..." 
