@@ -14,7 +14,7 @@ def getlines(dirs):
             line = line.strip(' ')
             match_1 = re.match('(from .* )*import ',line)
             match_2 = re.search(',\s*$',line)
-            if line.startswith('#') or line =='\n' or line.startswith('"""') or line.startswith("'''"):
+            if line.startswith('#') or line.startswith('//') or line =='\n' or line.startswith('"""') or line.startswith("'''"):
                 if line.startswith('"""') or line.startswith("'''"):
                     if line.count('"""')!=2:
                         flag=1
@@ -55,7 +55,7 @@ def getlines(dirs):
 fdir_prev=''
 for r,d,f in os.walk(os.getcwd()):
     for files in f:
-        if files.endswith('.py'):
+        if files.endswith('.py') or files.endswith('.java'):
             print files
             dirs = os.path.join(r,files)
             fdir = dirs.split(files)[0]
