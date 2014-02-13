@@ -9,11 +9,15 @@ class ModelChecker(object):
         fsm_desc = policy.fsm_description 
         arch_str = platform.architecture()
         if arch_str:
+            if not os.environ.has_key('PYRESOPATH'):
+                print 'PYRESOPATH env variable not set. Set it with export command.'
+                return
+            pyreso_path_str = os.environ['PYRESOPATH']
             if arch_str[0].startswith('32'):  
-                self.exec_cmd = './smv/NuSMV_32'
+                self.exec_cmd = pyreso_path_str + '/smv/NuSMV_32'
             else:
-                self.exec_cmd = './smv/NuSMV_64'
-        self.smv_file_directory = './smv/smv_files/'
+                self.exec_cmd = pyreso_path_str + '/smv/NuSMV_64'
+        self.smv_file_directory = pyreso_path_str + '/smv/smv_files/'
 
         # Translate and create smv file
 #        path_to_file = self.translate_to_smv_file(fsm_desc, filename)
