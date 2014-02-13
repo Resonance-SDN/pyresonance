@@ -120,7 +120,12 @@ class ModelChecker(object):
 
 
     def feed_to_nusmv(self, path_to_file):
+       
+        print '========================== NuSMV OUTPUT ==========================\n'
+
         p = subprocess.Popen([self.exec_cmd, '-r', path_to_file], stdout=subprocess.PIPE) 
         out, err = p.communicate()
 
         print out
+
+        print '======================== NuSMV OUTPUT END ========================\n'
