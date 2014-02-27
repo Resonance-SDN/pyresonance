@@ -24,19 +24,14 @@ class Event(object):
         self.flow = flow
 
 
-class NextFns(object):
-    def __init__(self,state_fn=None,event_fn=None):
-        self.state_fn = state_fn
-        self.event_fn = event_fn
-        
-
-class FlecFSM(DynamicPolicy):
-    def __init__(self,t,s,n):
+class LpecFSM(DynamicPolicy):
+    def __init__(self,t,s,n,x):
         self.type = copy.copy(t)
         self.state = copy.copy(s)  # really variables, but all the variables together are the state
-        self.next = n
+        self.endogenous_trans = n
+        self.exogenous_trans = x
         self._topo_init = False
-        super(FlecFSM,self).__init__(self.state['policy'])
+        super(LpecFSM,self).__init__(self.state['policy'])
 
     def handle_event(self,event_name,event_val_rep):
         var_name = event_name
@@ -55,8 +50,11 @@ class FlecFSM(DynamicPolicy):
             if not isinstance(event_val,var_type):
                 raise RuntimeError('event_val type mismatch (%s,%s)' % (type(event_val),var_type) )
 
+        if not self.exogenous_trans[var_name]:
+            raise RuntimeError('var %s cannot be affected by external events!' % var_name)
+
         # calculate the next value and update, if applicable
-        next_val = self.next[var_name].event_fn(event_val)
+        next_val = event_val
         if next_val != self.state[var_name]:
             self.state[var_name] = next_val
             self.handle_var_change(var_name)
@@ -93,15 +91,15 @@ class FlecFSM(DynamicPolicy):
         dependent_vars = self.get_dependent_vars(init_var_name)
         while len(dependent_vars) > 0:
             var_name = dependent_vars.pop()
-            next_val = self.next[var_name].state_fn(self.state)
+            next_val = self.endogenous_trans[var_name](self.state)
             if next_val != self.state[var_name]:
                 self.state[var_name] = next_val
                 dependent_vars |= self.get_dependent_vars(var_name)
                 changed_vars.add(var_name)
                 
         # change initial variable, if appropriate
-        if self.next[init_var_name].state_fn:
-            next_val = self.next[init_var_name].state_fn(self.state)
+        if self.endogenous_trans[init_var_name]:
+            next_val = self.endogenous_trans[init_var_name](self.state)
             if next_val != self.state[init_var_name]:
                 self.state[init_var_name] = next_val
 
@@ -116,7 +114,7 @@ class FlecFSM(DynamicPolicy):
             return
 
         # topo_change IS A RESERVED NAME!!!
-        if 'topo_change' in self.next:
+        if 'topo_change' in self.exogenous_trans:
             self.handle_event('topo_change',True)
 
     def current_state_string(self):
@@ -126,11 +124,12 @@ class FlecFSM(DynamicPolicy):
 
 class FSMPolicy(DynamicPolicy):
     
-    def __init__(self,flec_fn,fsm_description):
+    def __init__(self,lpec_fn,fsm_description):
         self.type = dict()
         self.state = dict()
-        self.next = dict()
-        self.flec_fn = flec_fn
+        self.endogenous_trans = dict()
+        self.exogenous_trans = dict()
+        self.lpec_fn = lpec_fn
 
         # def get_deps(nfs):
         #     nf_event = nfs.event_fn
@@ -145,9 +144,10 @@ class FSMPolicy(DynamicPolicy):
         for var_name,var_def in fsm_description.map.items():
             self.type[var_name] = var_def['type']
             self.state[var_name] = var_def['init']
-            self.next[var_name] = var_def['next']
+            self.endogenous_trans[var_name] = var_def['endogenous']
+            self.exogenous_trans[var_name] = var_def['exogenous']
         #    self.dep[var_name] = get_deps(nfs)
-        self.flec_to_fsm = dict()
+        self.lpec_to_fsm = dict()
         self.initial_policy = self.state['policy']
         self.lock = Lock()
         super(FSMPolicy,self).__init__(self.initial_policy)
@@ -155,40 +155,40 @@ class FSMPolicy(DynamicPolicy):
 
     def event_handler(self,event):
 
-        # Events that apply to a single flec
+        # Events that apply to a single lpec
         if event.flow:
             try:
-                flec = self.flec_fn(event.flow)
+                lpec = self.lpec_fn(event.flow)
             except KeyError:
-                print 'Error: event flow must contain all fields used in flec_relation.  Ignoring.'
+                print 'Error: event flow must contain all fields used in lpec_relation.  Ignoring.'
                 return
 
-            if flec is None:
+            if lpec is None:
                 return
 
             # DynamicPolicies can't be hashed
             # still need to implement hashing for static policies
-            # in meantime, use string representation of the cannonical flec
-            flec_k = repr(flec)  
+            # in meantime, use string representation of the cannonical lpec
+            lpec_k = repr(lpec)  
 
             with self.lock:
-                # get the flec objects from the flow
-                if flec_k in self.flec_to_fsm:
-                    flec_new = False
+                # get the lpec objects from the flow
+                if lpec_k in self.lpec_to_fsm:
+                    lpec_new = False
                 else:
-                    self.flec_to_fsm[flec_k] = FlecFSM(self.type,self.state,self.next)
-                    flec_new = True
+                    self.lpec_to_fsm[lpec_k] = LpecFSM(self.type,self.state,self.endogenous_trans,self.exogenous_trans)
+                    lpec_new = True
 
-                # have the flec_fsm handle the event
-                flec_fsm = self.flec_to_fsm[flec_k]
-                flec_fsm.handle_event(event.name,event.value)
+                # have the lpec_fsm handle the event
+                lpec_fsm = self.lpec_to_fsm[lpec_k]
+                lpec_fsm.handle_event(event.name,event.value)
 
-                # if the flec is new, update the policy
-                if flec_new:
-                    self.policy = if_(flec,flec_fsm,self.policy)
+                # if the lpec is new, update the policy
+                if lpec_new:
+                    self.policy = if_(lpec,lpec_fsm,self.policy)
 
-        # Events that apply to all flecs
+        # Events that apply to all lpecs
         else:
             with self.lock:
-                for flec_fsm in self.flec_to_fsm.values():
-                    flec_fsm.handle_event(event.name,event.value)
+                for lpec_fsm in self.lpec_to_fsm.values():
+                    lpec_fsm.handle_event(event.name,event.value)

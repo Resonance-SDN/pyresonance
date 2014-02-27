@@ -59,15 +59,7 @@ class ids(DynamicPolicy):
 
         ## SET UP TRANSITION FUNCTIONS
 
-        def infected_exg(event):
-            cases = list()
-            cases.append(default(event))
-            for c in cases:
-                if c.tst.eval():
-                    return c.rslt
-            raise RuntimeError
-
-        def policy_endg(state):
+        def policy_trans(state):
             infected = var('infected')
             cases = list()
             cases.append(case(infected,drop))
@@ -77,16 +69,17 @@ class ids(DynamicPolicy):
                     return c.rslt
             raise RuntimeError
 
-
         ### SET UP THE FSM DESCRIPTION
 
         self.fsm_description = FSMDescription(
             infected=VarDesc(type=bool, 
                              init=False, 
-                             next=NextFns(event_fn=infected_exg)),
+                             endogenous=False,
+                             exogenous=True),
             policy=VarDesc(type=[drop,identity],
                            init=identity,
-                           next=NextFns(state_fn=policy_endg)))
+                           endogenous=policy_trans,
+                           exogenous=True))
 
         ### SET UP POLICY AND EVENT STREAMS
 

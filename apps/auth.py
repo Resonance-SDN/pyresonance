@@ -28,10 +28,7 @@ class auth(DynamicPolicy):
 
         ## SET UP TRANSITION FUNCTIONS
 
-        def auth_next(event):
-            return event
-
-        def policy_next(state):
+        def policy_trans(state):
             if state['auth']:
                 return identity
             else:
@@ -40,12 +37,14 @@ class auth(DynamicPolicy):
         ### SET UP THE FSM DESCRIPTION
 
         self.fsm_description = FSMDescription( 
-            auth=VarDesc(type=bool, 
-                         init=False, 
-                         next=NextFns(event_fn=auth_next)), 
+            auth=VarDesc(type=bool,
+                         init=False,
+                         endogenous=False,
+                         exogenous=True),
             policy=VarDesc(type=[drop,identity],
                            init=drop,
-                           next=NextFns(state_fn=policy_next)))
+                           endogenous=policy_trans,
+                           exogenous=False))
 
         ### SET UP POLICY AND EVENT STREAMS
 

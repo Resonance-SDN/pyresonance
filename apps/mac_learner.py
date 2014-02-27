@@ -34,22 +34,16 @@ class mac_learner(DynamicPolicy):
 
         ## SET UP TRANSITION FUNCTIONS
 
-        def topo_change_next_state(state):
+        def topo_change_trans(state):
             return False
 
-        def topo_change_next_event(event):
-            return True
-
-        def port_next_state(state):
+        def port_trans(state):
             if state['topo_change']:
                 return 0
             else:
                 return state['port']
 
-        def port_next_event(event):
-            return event
-
-        def policy_next(state):
+        def policy_trans(state):
             if state['port'] == 0:
                 return flood()
             else:
@@ -60,15 +54,16 @@ class mac_learner(DynamicPolicy):
         self.fsm_description = FSMDescription(
             topo_change=VarDesc(type=bool,
                                 init=False,
-                                next=NextFns(state_fn=topo_change_next_state,
-                                      event_fn=topo_change_next_event)),
+                                endogenous=topo_change_trans,
+                                exogenous=True),
             port=VarDesc(type=int,
                          init=0,
-                         next=NextFns(state_fn=port_next_state,
-                                      event_fn=port_next_event)),
+                         endogenous=port_trans,
+                         exogenous=True),
             policy=VarDesc(type=[],
                            init=flood(),
-                           next=NextFns(state_fn=policy_next)))
+                           endogenous=policy_trans,
+                           exogenous=False))
 
         ### DEFINE QUERY CALLBACKS
 

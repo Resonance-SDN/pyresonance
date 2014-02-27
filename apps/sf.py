@@ -34,10 +34,7 @@ class sf(DynamicPolicy):
 
         ## SET UP TRANSITION FUNCTIONS
 
-        def outgoing_next_event(event):
-            return event
-
-        def policy_next(state):
+        def policy_trans(state):
             if state['outgoing']:
                 return identity
             else:
@@ -48,10 +45,12 @@ class sf(DynamicPolicy):
         self.fsm_description = FSMDescription(
             outgoing=VarDesc(type=bool, 
                              init=False, 
-                             next=NextFns(event_fn=outgoing_next_event)),
+                             endogenous=False,
+                             exogenous=True),
             policy=VarDesc(type=[identity,ih_prd],
                            init=ih_prd,
-                           next=NextFns(state_fn=policy_next)))
+                           endogenous=policy_trans,
+                           exogenous=False))
 
         ### DEFINE QUERY CALLBACKS
 
