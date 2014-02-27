@@ -34,11 +34,10 @@ class auth(DynamicPolicy):
 
         ## SET UP TRANSITION FUNCTIONS
 
-        def policy_trans(state):
-            if state['auth']:
-                return identity
-            else:
-                return drop
+        @transition
+        def policy_trans(self):
+            self.case(var('auth')==const(True),const(identity))
+            self.default(const(drop))
 
         ### SET UP THE FSM DESCRIPTION
 

@@ -34,11 +34,10 @@ class sf(DynamicPolicy):
 
         ## SET UP TRANSITION FUNCTIONS
 
-        def policy_trans(state):
-            if state['outgoing']:
-                return identity
-            else:
-                return ih_prd
+        @transition
+        def policy_trans(self):
+            self.case(var('outgoing')==const(True),const(identity))
+            self.default(const(ih_prd))
 
         ### SET UP THE FSM DESCRIPTION
 
