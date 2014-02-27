@@ -3,8 +3,14 @@ MODULE main
     policy : {drop,identity};
     infected : boolean;
   ASSIGN
-   init(policy) := identity;
    init(infected) := FALSE;
+   init(policy) := identity;
+   next(infected) := 
+     case
+       infected & !(policy=drop) : TRUE;
+       !infected & !(policy=identity) : FALSE;
+       TRUE : {FALSE,TRUE};
+     esac;
    next(policy) := 
      case
        infected  : drop;
