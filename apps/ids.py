@@ -22,39 +22,76 @@ from pyretic.pyresonance.smv.translate import *
 #####################################################################################################
 
 
+class tst(object):
+    pass
+
+@singleton
+class T(tst):
+    def eval(self,state=None):
+        return True
+
+    def __str__(self):
+        return 'True'
+
+class var(object):
+    def __init__(self,s):
+        self.name=s
+
+    def eval(self,state):
+        return state[self.name]
+
+class case(object):
+    def __init__(self,tst,rslt):
+        self.tst=tst
+        self.rslt=rslt
+
+class default(case):
+    def __init__(self,rslt):
+        return super(default,self).__init__(T,rslt)
+
 
 class ids(DynamicPolicy):
     def __init__(self):
 
-       ### DEFINE THE FLEC FUNCTION
+       ### DEFINE THE LPEC FUNCTION
 
-        def flec_fn(f):
+        def lpec(f):
             return match(srcip=f['srcip'])
 
         ## SET UP TRANSITION FUNCTIONS
 
-        def infected_next(event):
-            return event
+        def infected_exg(event):
+            cases = list()
+            cases.append(default(event))
+            for c in cases:
+                if c.tst.eval():
+                    return c.rslt
+            raise RuntimeError
 
-        def policy_next(state):
-            if state['infected']:
-                return drop
-            else:
-                return identity
+        def policy_endg(state):
+            infected = var('infected')
+            cases = list()
+            cases.append(case(infected,drop))
+            cases.append(default(identity))
+            for c in cases:
+                if c.tst.eval(state):
+                    return c.rslt
+            raise RuntimeError
+
 
         ### SET UP THE FSM DESCRIPTION
 
         self.fsm_description = { 
             'infected' : (bool, 
                           False, 
-                          NextFns(event_fn=infected_next)), 
+                          NextFns(event_fn=infected_exg)), 
             'policy'   : ([drop,identity],
                           identity,
-                          NextFns(state_fn=policy_next)) }
+                          NextFns(state_fn=policy_endg)) }
 
         ### SET UP POLICY AND EVENT STREAMS
 
-        fsm_pol = FSMPolicy(flec_fn,self.fsm_description)
+        fsm_pol = FSMPolicy(lpec,self.fsm_description)
         json_event = JSONEvent()
         json_event.register_callback(fsm_pol.event_handler)
 
