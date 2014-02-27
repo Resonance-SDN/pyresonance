@@ -47,7 +47,17 @@ class case(object):
 
 class default(case):
     def __init__(self,rslt):
-        return super(default,self).__init__(T,rslt)
+        super(default,self).__init__(T,rslt)
+
+class trans(object):
+    def __init__(self):
+        self.cases = list()
+
+    def __call__(self,state):
+        for c in self.cases:
+            if c.tst.eval(state):
+                return c.rslt
+        raise RuntimeError
 
 class ids(DynamicPolicy):
     def __init__(self):
@@ -59,15 +69,12 @@ class ids(DynamicPolicy):
 
         ## SET UP TRANSITION FUNCTIONS
 
-        def policy_trans(state):
-            infected = var('infected')
-            cases = list()
-            cases.append(case(infected,drop))
-            cases.append(default(identity))
-            for c in cases:
-                if c.tst.eval(state):
-                    return c.rslt
-            raise RuntimeError
+        class policy_trans(trans):
+            def __init__(self):
+                super(policy_trans,self).__init__()
+                infected = var('infected')
+                self.cases.append(case(infected,drop))
+                self.cases.append(default(identity))
 
         ### SET UP THE FSM DESCRIPTION
 
@@ -77,7 +84,7 @@ class ids(DynamicPolicy):
                              exogenous=True),
             policy=VarDesc(type=[drop,identity],
                            init=identity,
-                           endogenous=policy_trans,
+                           endogenous=policy_trans(),
                            exogenous=True))
 
         ### SET UP POLICY AND EVENT STREAMS
