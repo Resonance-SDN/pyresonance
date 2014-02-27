@@ -8,7 +8,23 @@ from pyretic.pyresonance.fsm_policy import *
 from pyretic.pyresonance.drivers.json_event import JSONEvent 
 from pyretic.pyresonance.smv.translate import *
 
-    
+ 
+#####################################################################################################
+# * App launch
+#   - pyretic.py pyretic.pyresonance.apps.server_lb
+#
+# * Mininet Generation (in "~/pyretic/pyretic/pyresonance" directory)
+#   - sudo mn --controller=remote,ip=127.0.0.1 --mac --arp --switch ovsk --link=tc --custom mininet_topos/example_topos.py --topo=server_lb
+#
+# * Start ping from h1 to h2 
+#   - mininet> h1 ping h2
+#
+# * Events  (in "~/pyretic/pyretic/pyresonance" directory)
+#   - python json_sender.py -n lb -l True --flow="{srcip=10.0.0.1,dstip=10.0.0.2}" -a 127.0.0.1 -p 50001
+#
+#####################################################################################################
+
+
 
 class serverlb(DynamicPolicy):
     def __init__(self):
@@ -53,16 +69,13 @@ class serverlb(DynamicPolicy):
 
        ### DEFINE THE FLEC FUNCTION
 
-        def flec_fn(f):
+        def lpec(f):
             return match(srcip=f['srcip'])
  
             
         ## SET UP TRANSITION FUNCTIONS
-
-        def server_next(event):
-            return event
-    
-        def policy_next(state):
+        
+        def policy_trans(state):
             if state['server']:
                 return randomly_choose_server(self.servers)
             else:
@@ -71,17 +84,18 @@ class serverlb(DynamicPolicy):
 
         ### SET UP THE FSM DESCRIPTION
     
-        self.fsm_description = { 
-          'server' : (bool,
-                      False,
-                      NextFns(event_fn=server_next)),
-          'policy' : ([server_i_policy(i) for i in self.servers ],
-                      server_i_policy(choice(self.servers.keys())),
-                      NextFns(state_fn=policy_next)) }
-    
+        self.fsm_description = FSMDescription(
+            server=VarDesc(type=bool, 
+                             init=False, 
+                             endogenous=False,
+                             exogenous=True),
+            policy=VarDesc(type=[server_i_policy(i) for i in self.servers ],
+                           init=server_i_policy(choice(self.servers.keys())),
+                           endogenous=policy_trans,
+                           exogenous=True))
    
         # Instantiate FSMPolicy, start/register JSON handler.
-        fsm_pol = FSMPolicy(flec_fn, self.fsm_description)
+        fsm_pol = FSMPolicy(lpec, self.fsm_description)
         json_event = JSONEvent()
         json_event.register_callback(fsm_pol.event_handler)
         
