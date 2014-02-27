@@ -74,7 +74,6 @@ class ids(DynamicPolicy):
         self.fsm_description = FSMDescription(
             infected=VarDesc(type=bool, 
                              init=False, 
-                             endogenous=False,
                              exogenous=True),
             policy=VarDesc(type=[drop,identity],
                            init=identity,

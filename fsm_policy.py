@@ -10,7 +10,16 @@ from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
 class VarDesc(dict):
-    pass
+    __slots__ = ["_dict"]
+    def __init__(self,**kwargs):
+        self._dict = dict(endogenous=False,exogenous=False)
+        self._dict.update(dict(**kwargs))
+        
+    def get(self, key, default=None):
+        return self._dict.get(key, default)
+
+    def __getitem__(self, item):
+        return self._dict[item]
 
 class FSMDescription(object):
     def __init__(self,**kwargs):

@@ -62,8 +62,7 @@ class mac_learner(DynamicPolicy):
                          exogenous=True),
             policy=VarDesc(type=[],
                            init=flood(),
-                           endogenous=policy_trans,
-                           exogenous=False))
+                           endogenous=policy_trans))
 
         ### DEFINE QUERY CALLBACKS
 

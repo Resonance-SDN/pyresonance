@@ -45,12 +45,10 @@ class sf(DynamicPolicy):
         self.fsm_description = FSMDescription(
             outgoing=VarDesc(type=bool, 
                              init=False, 
-                             endogenous=False,
                              exogenous=True),
             policy=VarDesc(type=[identity,ih_prd],
                            init=ih_prd,
-                           endogenous=policy_trans,
-                           exogenous=False))
+                           endogenous=policy_trans))
 
         ### DEFINE QUERY CALLBACKS
 

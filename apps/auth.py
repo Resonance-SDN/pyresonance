@@ -39,12 +39,10 @@ class auth(DynamicPolicy):
         self.fsm_description = FSMDescription( 
             auth=VarDesc(type=bool,
                          init=False,
-                         endogenous=False,
                          exogenous=True),
             policy=VarDesc(type=[drop,identity],
                            init=drop,
-                           endogenous=policy_trans,
-                           exogenous=False))
+                           endogenous=policy_trans))
 
         ### SET UP POLICY AND EVENT STREAMS
 
