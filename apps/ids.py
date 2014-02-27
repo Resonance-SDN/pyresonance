@@ -49,7 +49,6 @@ class default(case):
     def __init__(self,rslt):
         return super(default,self).__init__(T,rslt)
 
-
 class ids(DynamicPolicy):
     def __init__(self):
 
@@ -81,13 +80,13 @@ class ids(DynamicPolicy):
 
         ### SET UP THE FSM DESCRIPTION
 
-        self.fsm_description = { 
-            'infected' : (bool, 
-                          False, 
-                          NextFns(event_fn=infected_exg)), 
-            'policy'   : ([drop,identity],
-                          identity,
-                          NextFns(state_fn=policy_endg)) }
+        self.fsm_description = FSMDescription(
+            infected=VarDesc(type=bool, 
+                             init=False, 
+                             next=NextFns(event_fn=infected_exg)),
+            policy=VarDesc(type=[drop,identity],
+                           init=identity,
+                           next=NextFns(state_fn=policy_endg)))
 
         ### SET UP POLICY AND EVENT STREAMS
 

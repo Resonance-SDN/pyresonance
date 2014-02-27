@@ -21,9 +21,9 @@ from pyretic.pyresonance.smv.translate import *
 class auth(DynamicPolicy):
     def __init__(self):
 
-       ### DEFINE THE FLEC FUNCTION
+       ### DEFINE THE LPEC FUNCTION
 
-        def flec_fn(f):
+        def lpec(f):
             return match(srcip=f['srcip'])
 
         ## SET UP TRANSITION FUNCTIONS
@@ -39,17 +39,17 @@ class auth(DynamicPolicy):
 
         ### SET UP THE FSM DESCRIPTION
 
-        self.fsm_description = { 
-            'auth' : (bool, 
-                          False, 
-                          NextFns(event_fn=auth_next)), 
-            'policy'   : ([drop,identity],
-                          drop,
-                          NextFns(state_fn=policy_next)) }
+        self.fsm_description = FSMDescription( 
+            auth=VarDesc(type=bool, 
+                         init=False, 
+                         next=NextFns(event_fn=auth_next)), 
+            policy=VarDesc(type=[drop,identity],
+                           init=drop,
+                           next=NextFns(state_fn=policy_next)))
 
         ### SET UP POLICY AND EVENT STREAMS
 
-        fsm_pol = FSMPolicy(flec_fn,self.fsm_description)
+        fsm_pol = FSMPolicy(lpec,self.fsm_description)
         json_event = JSONEvent()
         json_event.register_callback(fsm_pol.event_handler)
 

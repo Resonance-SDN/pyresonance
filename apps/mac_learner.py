@@ -26,9 +26,9 @@ from pyretic.pyresonance.smv.translate import *
 class mac_learner(DynamicPolicy):
     def __init__(self):
 
-        ### DEFINE THE FLEC FUNCTION
+        ### DEFINE THE LPEC FUNCTION
 
-        def flec_fn(f):
+        def lpec(f):
             return match(dstmac=f['dstmac'],
                          switch=f['switch'])
 
@@ -57,18 +57,18 @@ class mac_learner(DynamicPolicy):
 
         ### SET UP THE FSM DESCRIPTION
 
-        self.fsm_description = { 
-            'topo_change' : (bool,
-                             False,
-                             NextFns(state_fn=topo_change_next_state,
+        self.fsm_description = FSMDescription(
+            topo_change=VarDesc(type=bool,
+                                init=False,
+                                next=NextFns(state_fn=topo_change_next_state,
                                       event_fn=topo_change_next_event)),
-            'port' :        (int,
-                             0,
-                             NextFns(state_fn=port_next_state,
+            port=VarDesc(type=int,
+                         init=0,
+                         next=NextFns(state_fn=port_next_state,
                                       event_fn=port_next_event)),
-            'policy' :      ([],
-                             flood(),
-                             NextFns(state_fn=policy_next))}
+            policy=VarDesc(type=[],
+                           init=flood(),
+                           next=NextFns(state_fn=policy_next)))
 
         ### DEFINE QUERY CALLBACKS
 
@@ -81,7 +81,7 @@ class mac_learner(DynamicPolicy):
 
         ### SET UP POLICY AND EVENT STREAMS
 
-        fsm_pol = FSMPolicy(flec_fn,self.fsm_description)
+        fsm_pol = FSMPolicy(lpec,self.fsm_description)
         rq = resetting_q(query.packets,limit=1,group_by=['srcmac','switch'])
         rq.register_callback(q_callback)
 

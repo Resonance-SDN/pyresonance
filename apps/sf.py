@@ -10,9 +10,9 @@ from pyretic.pyresonance.smv.translate import *
 class sf(DynamicPolicy):
     def __init__(self,internal_hosts,ih_prd):
 
-       ### DEFINE THE FLEC FUNCTION
+       ### DEFINE THE LPEC FUNCTION
 
-        def flec_fn(f):
+        def lpec(f):
             hosts = list()
             internal_h = None
             external_h = None
@@ -45,13 +45,13 @@ class sf(DynamicPolicy):
 
         ### SET UP THE FSM DESCRIPTION
 
-        self.fsm_description = { 
-            'outgoing' : (bool, 
-                          False, 
-                          NextFns(event_fn=outgoing_next_event)),
-            'policy'   : ([identity,ih_prd],
-                          ih_prd,
-                          NextFns(state_fn=policy_next)) }
+        self.fsm_description = FSMDescription(
+            outgoing=VarDesc(type=bool, 
+                             init=False, 
+                             next=NextFns(event_fn=outgoing_next_event)),
+            policy=VarDesc(type=[identity,ih_prd],
+                           init=ih_prd,
+                           next=NextFns(state_fn=policy_next)))
 
         ### DEFINE QUERY CALLBACKS
 
@@ -63,7 +63,7 @@ class sf(DynamicPolicy):
 
         ### SET UP POLICY AND EVENT STREAMS
 
-        fsm_pol = FSMPolicy(flec_fn,self.fsm_description)
+        fsm_pol = FSMPolicy(lpec,self.fsm_description)
         q = FwdBucket()
         q.register_callback(q_callback)
 

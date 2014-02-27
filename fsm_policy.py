@@ -9,6 +9,14 @@ import textwrap
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
+class VarDesc(dict):
+    pass
+
+class FSMDescription(object):
+    def __init__(self,**kwargs):
+        self.map = dict(**kwargs)
+
+
 class Event(object):
     def __init__(self,name,value,flow):
         self.name = name
@@ -134,11 +142,10 @@ class FSMPolicy(DynamicPolicy):
  
         #         print re.findall(r'\bv\w+', thesentence)
                 
-        for var_name,state_tuple in fsm_description.items():
-            state_type, init_val, nfs = state_tuple
-            self.type[var_name] = state_type
-            self.state[var_name] = init_val
-            self.next[var_name] = nfs
+        for var_name,var_def in fsm_description.map.items():
+            self.type[var_name] = var_def['type']
+            self.state[var_name] = var_def['init']
+            self.next[var_name] = var_def['next']
         #    self.dep[var_name] = get_deps(nfs)
         self.flec_to_fsm = dict()
         self.initial_policy = self.state['policy']
