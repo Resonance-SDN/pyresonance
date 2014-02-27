@@ -35,20 +35,19 @@ class mac_learner(DynamicPolicy):
 
         ## SET UP TRANSITION FUNCTIONS
 
-        def topo_change_trans(state):
-            return False
+        @transition
+        def topo_change_trans(self):
+            self.default(const(False))
 
-        def port_trans(state):
-            if state['topo_change']:
-                return 0
-            else:
-                return state['port']
+        @transition
+        def port_trans(self):
+            self.case(var('topo_change')==const(True),const(0))
+            self.default(var('port'))
 
-        def policy_trans(state):
-            if state['port'] == 0:
-                return flood()
-            else:
-                return fwd(state['port'])
+        @transition
+        def policy_trans(self):
+            self.case(var('port')==const(0),const(flood()))
+            self.default(fun(fwd,var('port')))
 
         ### SET UP THE FSM DESCRIPTION
 

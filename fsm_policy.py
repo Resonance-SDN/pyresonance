@@ -9,6 +9,80 @@ import textwrap
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
+
+class var(object):
+    def __init__(self,s):
+        self.name=s
+
+    def __call__(self,state):
+        return state[self.name]
+
+    def __eq__(self, other):
+        return var_test_eq(self,other)
+
+class var_test(object):
+    pass
+
+class var_test_eq(var_test):
+    def __init__(self,r,l):
+        self.r = r
+        self.l = l
+
+    def __call__(self,state):
+        return self.l(state)==self.r(state)
+
+class const(object):
+    def __init__(self,val):
+        self.val = val
+
+    def __call__(self,state):
+        return self.val
+
+class fun(object):
+    def __init__(self,fn,var):
+        self.fn = fn
+        self.var = var
+
+    def __call__(self,state):
+        return self.fn(self.var(state))
+
+class case(object):
+    def __init__(self,tst,rslt):
+        self.tst=tst
+        self.rslt=rslt
+        
+class default(case):
+    def __init__(self,rslt):
+        super(default,self).__init__(const(True),rslt)
+
+class Transition(object):
+    def __init__(self):
+        self.cases = list()
+
+    def case(self,tst,rslt):
+        new_case = case(tst,rslt)
+        self.cases.append(new_case)
+
+    def default(self,rslt):
+        new_case = default(rslt)
+        self.cases.append(new_case)
+
+    def __call__(self,state):
+        for c in self.cases:
+            if c.tst(state):
+                return c.rslt(state)
+        raise RuntimeError
+
+def transition(cases_fn):
+    class DecoratedTransition(Transition):
+        def __init__(self, *args, **kwargs):
+            Transition.__init__(self)
+            cases_fn(self, *args, **kwargs)
+
+    DecoratedTransition.__name__ = cases_fn.__name__
+    return DecoratedTransition()
+
+
 class VarDesc(dict):
     __slots__ = ["_dict"]
     def __init__(self,**kwargs):
