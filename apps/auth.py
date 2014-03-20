@@ -6,24 +6,19 @@ from pyretic.pyresonance.fsm_policy import *
 from pyretic.pyresonance.drivers.json_event import JSONEvent
 from pyretic.pyresonance.smv.translate import *
 
-
 #####################################################################################################
 # App launch
-#  - pyretic.py pyretic.pyresonance.apps.ids
+#  - pyretic.py pyretic.pyresonance.apps.auth
 #
 # Mininet Generation
 #  - sudo mn --controller=remote,ip=127.0.0.1 --mac --arp --switch ovsk --link=tc --topo=single,3
 #
-# Events to block traffic "h1 ping h2"
-#  - python json_sender.py -n infected -l True --flow="{srcip=10.0.0.1}" -a 127.0.0.1 -p 50001}
-#
-# Events to again allow traffic "h1 ping h2"
-#  - python json_sender.py -n infected -l False --flow="{srcip=10.0.0.1}" -a 127.0.0.1 -p 50001}
+# Events to allow traffic "h1 ping h2"
+#  - python json_sender.py -n auth -l True --flow="{srcip=10.0.0.1}" -a 127.0.0.1 -p 50001}
+#  - python json_sender.py -n auth -l True --flow="{srcip=10.0.0.2}" -a 127.0.0.1 -p 50001}
 #####################################################################################################
 
-
-
-class ids(DynamicPolicy):
+class auth(DynamicPolicy):
     def __init__(self):
 
        ### DEFINE THE FLEC FUNCTION
@@ -33,23 +28,23 @@ class ids(DynamicPolicy):
 
         ## SET UP TRANSITION FUNCTIONS
 
-        def infected_next(event):
+        def auth_next(event):
             return event
 
         def policy_next(state):
-            if state['infected']:
-                return drop
-            else:
+            if state['auth']:
                 return identity
+            else:
+                return drop
 
         ### SET UP THE FSM DESCRIPTION
 
         self.fsm_description = { 
-            'infected' : (bool, 
+            'auth' : (bool, 
                           False, 
-                          NextFns(event_fn=infected_next)), 
+                          NextFns(event_fn=auth_next)), 
             'policy'   : ([drop,identity],
-                          identity,
+                          drop,
                           NextFns(state_fn=policy_next)) }
 
         ### SET UP POLICY AND EVENT STREAMS
@@ -58,13 +53,13 @@ class ids(DynamicPolicy):
         json_event = JSONEvent()
         json_event.register_callback(fsm_pol.event_handler)
 
-        super(ids,self).__init__(fsm_pol)
+        super(auth,self).__init__(fsm_pol)
 
 
 def main():
-    pol = ids()
+    pol = auth()
 
     # For NuSMV
-    mc = ModelChecker(pol)  
+#    mc = ModelChecker(pol)  
 
     return pol >> flood()

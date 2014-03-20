@@ -7,6 +7,22 @@ from pyretic.pyresonance.fsm_policy import *
 from pyretic.pyresonance.smv.translate import *
 
 
+#####################################################################################################
+# App launch
+#  - pyretic.py pyretic.pyresonance.apps.mac_learner 
+#
+# Mininet Generation
+#  - sudo mininet.sh --topo=clique,3,3
+#
+# Events to block traffic "h1 ping h2"
+#  - python json_sender.py -n infected -l True --flow="{srcip=10.0.0.1}" -a 127.0.0.1 -p 50001}
+#
+# Events to again allow traffic "h1 ping h2"
+#  - python json_sender.py -n infected -l False --flow="{srcip=10.0.0.1}" -a 127.0.0.1 -p 50001}
+#####################################################################################################
+
+
+
 class mac_learner(DynamicPolicy):
     def __init__(self):
 

@@ -66,7 +66,13 @@ class FlecFSM(DynamicPolicy):
             return {'port'}
         elif var_name == 'server':
             return {'policy'}
+        elif var_name == 'lb':
+            return {'policy'}
+        elif var_name == 'rate':
+            return {'policy'}
         elif var_name == 'outgoing':
+            return { 'policy' }
+        elif var_name == 'auth':
             return { 'policy' }
         else:
             return set()
