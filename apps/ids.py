@@ -35,15 +35,25 @@ class ids(DynamicPolicy):
         ## SET UP TRANSITION FUNCTIONS
 
         @transition
+        def infected_trans(self):
+            new_evnt = evnt('infected',[False,True])
+            self.default(new_evnt)
+
+        print infected_trans.to_str('infected')
+
+        @transition
         def policy_trans(self):
             self.case(var('infected')==const(True),const(drop))
             self.default(const(identity))
+
+        print policy_trans.to_str('policy')
 
         ### SET UP THE FSM DESCRIPTION
 
         self.fsm_description = FSMDescription(
             infected=VarDesc(type=bool, 
                              init=False, 
+                             endogenous=infected_trans,
                              exogenous=True),
             policy=VarDesc(type=[drop,identity],
                            init=identity,

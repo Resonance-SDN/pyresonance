@@ -26,6 +26,8 @@ from pyretic.pyresonance.smv.translate import *
 
 class mac_learner(DynamicPolicy):
     def __init__(self):
+        max_port = 8
+        port_range = range(1,max_port+1)
 
         ### DEFINE THE LPEC FUNCTION
 
@@ -37,17 +39,28 @@ class mac_learner(DynamicPolicy):
 
         @transition
         def topo_change_trans(self):
+            new_evnt = evnt('topo_change',[False,True])
+            self.case(new_evnt!=const(None),new_evnt)
             self.default(const(False))
+
+        print topo_change_trans.to_str('topo_change')
 
         @transition
         def port_trans(self):
+            new_evnt = evnt('port',port_range)
+            self.case((new_evnt!=const(None)) & (var('port')==const(0)),new_evnt)
             self.case(var('topo_change')==const(True),const(0))
             self.default(var('port'))
+
+        print port_trans.to_str('port_trans')
 
         @transition
         def policy_trans(self):
             self.case(var('port')==const(0),const(flood()))
-            self.default(fun(fwd,var('port')))
+            for i in port_range:
+                self.case(var('port')==const(i),const(fwd(i)))
+
+        print policy_trans.to_str('policy_trans')
 
         ### SET UP THE FSM DESCRIPTION
 
