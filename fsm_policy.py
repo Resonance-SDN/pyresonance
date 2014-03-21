@@ -186,6 +186,9 @@ class LpecFSM(DynamicPolicy):
             return { 'policy' }
         elif var_name == 'auth':
             return { 'policy' }
+        elif var_name == 'monitor':
+            return { 'policy' }
+ 
         else:
             return set()
          

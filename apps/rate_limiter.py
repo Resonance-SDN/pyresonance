@@ -8,6 +8,7 @@ from pyretic.pyresonance.fsm_policy import *
 from pyretic.pyresonance.drivers.json_event import JSONEvent 
 from pyretic.pyresonance.smv.translate import *
 from pyretic.pyresonance.apps.mac_learner import *
+from pyretic.pyresonance.apps.monitor import *
 
     
 
@@ -100,5 +101,6 @@ def main():
 
 #    mc = ModelChecker(pol)
 
-    return pol
+#    return pol
+    return pol >> monitor()
 
