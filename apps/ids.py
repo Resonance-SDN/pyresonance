@@ -47,8 +47,7 @@ class ids(DynamicPolicy):
                              exogenous=True),
             policy=VarDesc(type=[drop,identity],
                            init=identity,
-                           endogenous=policy_trans,
-                           exogenous=True))
+                           endogenous=policy_trans))
 
         ### SET UP POLICY AND EVENT STREAMS
 
