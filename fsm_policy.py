@@ -20,6 +20,9 @@ class var(object):
     def __eq__(self, other):
         return var_test_eq(self,other)
 
+    def __str__(self):
+        return self.name
+
 class var_test(object):
     pass
 
@@ -30,6 +33,9 @@ class var_test_eq(var_test):
 
     def __call__(self,state):
         return self.l(state)==self.r(state)
+    
+    def __str__(self):
+        return '(' + str(self.l) + '=' + str(self.r) + ')'
 
 class const(object):
     def __init__(self,val):
@@ -37,6 +43,9 @@ class const(object):
 
     def __call__(self,state):
         return self.val
+
+    def __str__(self):
+        return str(self.val)
 
 class fun(object):
     def __init__(self,fn,var):
@@ -46,10 +55,16 @@ class fun(object):
     def __call__(self,state):
         return self.fn(self.var(state))
 
+    def __str__(self):
+        return str(self.fn) + '(' + str(self.var) + ')'
+
 class case(object):
     def __init__(self,tst,rslt):
         self.tst=tst
         self.rslt=rslt
+
+    def __str__(self):
+        return str(self.tst) + '\t: ' + str(self.rslt)
         
 class default(case):
     def __init__(self,rslt):
@@ -72,6 +87,14 @@ class Transition(object):
             if c.tst(state):
                 return c.rslt(state)
         raise RuntimeError
+
+    def to_str(self,vn):
+        r  = 'next(' + vn + ') :=\n' 
+        r += '\tcase\n'
+        for c in self.cases:
+            r += '\t\t' + str(c) + ';\n' 
+        r += '\tesac\n'
+        return r
 
 def transition(cases_fn):
     class DecoratedTransition(Transition):
