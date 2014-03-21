@@ -24,9 +24,9 @@ class var_test(object):
     pass
 
 class var_test_eq(var_test):
-    def __init__(self,r,l):
-        self.r = r
+    def __init__(self,l,r):
         self.l = l
+        self.r = r
 
     def __call__(self,state):
         return self.l(state)==self.r(state)
