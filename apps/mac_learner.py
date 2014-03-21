@@ -8,19 +8,20 @@ from pyretic.pyresonance.smv.translate import *
 
 
 #####################################################################################################
-# App launch
-#  - pyretic.py pyretic.pyresonance.apps.mac_learner 
+# * App launch
+#   - pyretic.py pyretic.pyresonance.apps.mac_learner
 #
-# Mininet Generation
-#  - sudo mininet.sh --topo=clique,3,3
+# * Mininet Generation (in "~/pyretic/pyretic/pyresonance" directory)
+#   - sudo mininet.sh --topo=clique,3,3
 #
-# Events to block traffic "h1 ping h2"
-#  - python json_sender.py -n infected -l True --flow="{srcip=10.0.0.1}" -a 127.0.0.1 -p 50001}
+# * Start ping from h1 to h2 
+#   - mininet> h1 ping h2
 #
-# Events to again allow traffic "h1 ping h2"
-#  - python json_sender.py -n infected -l False --flow="{srcip=10.0.0.1}" -a 127.0.0.1 -p 50001}
+# * Events are internal
+#   - Mac Learner application will automatically react to 
+#     topology change (e.g., link down and up) emulated from Mininet, and successfully
+#     forward traffic until no route exists between two hosts.
 #####################################################################################################
-
 
 
 class mac_learner(DynamicPolicy):
