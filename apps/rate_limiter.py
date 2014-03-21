@@ -99,7 +99,7 @@ class rate_limiter(DynamicPolicy):
 def main():
     pol = rate_limiter()
 
-#    mc = ModelChecker(pol)
+    mc = ModelChecker(pol)
 
 #    return pol
     return pol >> monitor()
