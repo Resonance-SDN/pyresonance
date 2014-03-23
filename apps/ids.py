@@ -35,33 +35,27 @@ class ids(DynamicPolicy):
         ## SET UP TRANSITION FUNCTIONS
 
         @transition
-        def infected_trans(self):
-            new_evnt = evnt('infected',[False,True])
-            self.default(new_evnt)
-
-        print infected_trans.to_str('infected')
+        def infected(self):
+            self.case(occured(self.event),self.event)
 
         @transition
-        def policy_trans(self):
-            self.case(var('infected')==const(True),const(drop))
-            self.default(const(identity))
-
-        print policy_trans.to_str('policy')
+        def policy(self):
+            self.case(is_true(V('infected')),C(drop))
+            self.default(C(identity))
 
         ### SET UP THE FSM DESCRIPTION
 
-        self.fsm_description = FSMDescription(
-            infected=VarDesc(type=bool, 
-                             init=False, 
-                             endogenous=infected_trans,
-                             exogenous=True),
-            policy=VarDesc(type=[drop,identity],
-                           init=identity,
-                           endogenous=policy_trans))
+        self.fsm_def = FSMDef(
+            infected=FSMVar(type=BoolType(), 
+                            init=False, 
+                            trans=infected),
+            policy=FSMVar(type=Type(Policy,{drop,identity}),
+                          init=identity,
+                          trans=policy))
 
         ### SET UP POLICY AND EVENT STREAMS
 
-        fsm_pol = FSMPolicy(lpec,self.fsm_description)
+        fsm_pol = FSMPolicy(lpec,self.fsm_def)
         json_event = JSONEvent()
         json_event.register_callback(fsm_pol.event_handler)
 
@@ -70,6 +64,8 @@ class ids(DynamicPolicy):
 
 def main():
     pol = ids()
+
+    print fsm_def_to_smv_model(pol.fsm_def)
 
     # For NuSMV
     mc = ModelChecker(pol)  

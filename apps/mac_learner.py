@@ -27,7 +27,10 @@ from pyretic.pyresonance.smv.translate import *
 class mac_learner(DynamicPolicy):
     def __init__(self):
         max_port = 8
-        port_range = range(1,max_port+1)
+        port_range = range(max_port+1)
+        def int_to_policy(i):
+            return flood() if i==0 else fwd(i)
+        pol_range = map(int_to_policy,port_range)
 
         ### DEFINE THE LPEC FUNCTION
 
@@ -38,44 +41,32 @@ class mac_learner(DynamicPolicy):
         ## SET UP TRANSITION FUNCTIONS
 
         @transition
-        def topo_change_trans(self):
-            new_evnt = evnt('topo_change',[False,True])
-            self.case(new_evnt!=const(None),new_evnt)
-            self.default(const(False))
-
-        print topo_change_trans.to_str('topo_change')
+        def topo_change(self):
+            self.case(occured(self.event),self.event)
+            self.default(C(False))
 
         @transition
-        def port_trans(self):
-            new_evnt = evnt('port',port_range)
-            self.case((new_evnt!=const(None)) & (var('port')==const(0)),new_evnt)
-            self.case(var('topo_change')==const(True),const(0))
-            self.default(var('port'))
-
-        print port_trans.to_str('port_trans')
+        def port(self):
+            self.case(occured(self.event) & (V('port')==C(0)),self.event)
+            self.case(is_true(V('topo_change')),C(0))
 
         @transition
-        def policy_trans(self):
-            self.case(var('port')==const(0),const(flood()))
+        def policy(self):
             for i in port_range:
-                self.case(var('port')==const(i),const(fwd(i)))
-
-        print policy_trans.to_str('policy_trans')
+                self.case(V('port')==C(i),C(int_to_policy(i)))
 
         ### SET UP THE FSM DESCRIPTION
 
-        self.fsm_description = FSMDescription(
-            topo_change=VarDesc(type=bool,
-                                init=False,
-                                endogenous=topo_change_trans,
-                                exogenous=True),
-            port=VarDesc(type=int,
-                         init=0,
-                         endogenous=port_trans,
-                         exogenous=True),
-            policy=VarDesc(type=[],
-                           init=flood(),
-                           endogenous=policy_trans))
+        self.fsm_def = FSMDef(
+            topo_change=FSMVar(type=BoolType(),
+                               init=False,
+                               trans=topo_change),
+            port=FSMVar(type=Type(int,set(port_range)),
+                        init=0,
+                        trans=port),
+            policy=FSMVar(type=Type(Policy,set(pol_range)),
+                          init=flood(),
+                          trans=policy))
 
         ### DEFINE QUERY CALLBACKS
 
@@ -88,7 +79,7 @@ class mac_learner(DynamicPolicy):
 
         ### SET UP POLICY AND EVENT STREAMS
 
-        fsm_pol = FSMPolicy(lpec,self.fsm_description)
+        fsm_pol = FSMPolicy(lpec,self.fsm_def)
         rq = resetting_q(query.packets,limit=1,group_by=['srcmac','switch'])
         rq.register_callback(q_callback)
 
@@ -98,7 +89,9 @@ class mac_learner(DynamicPolicy):
 def main():
     pol = mac_learner()
 
+    print fsm_def_to_smv_model(pol.fsm_def)
+
     # For NuSMV
-    mc = ModelChecker(pol)  
+#    mc = ModelChecker(pol)  
 
     return pol

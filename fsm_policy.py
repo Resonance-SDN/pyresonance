@@ -8,210 +8,7 @@ import textwrap
 
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
-
-bool_type = [False,True]
-
-class var(object):
-    def __init__(self,s):
-        self.name=s
-
-    def __call__(self,state,event):
-        return state[self.name]
-
-    def __eq__(self, other):
-        return var_test_eq(self,other)
-
-    def __ne__(self,other):
-        return var_test_ne(self,other)
-
-    def __str__(self):
-        return self.name
-
-class evnt(object):
-    def __init__(self,s,t):
-        self.name=s
-        self.type=t
-
-    def __call__(self,state,event):
-        return event[self.name]
-
-    def __eq__(self, other):
-        return evnt_test_eq(self,other)
-
-    def __ne__(self,other):
-        return evnt_test_ne(self,other)
-
-    def __str__(self):
-        return '{' + ','.join([str(t) for t in self.type]) + '}'
-
-class const(object):
-    def __init__(self,val):
-        self.val = val
-
-    def __call__(self,state,event):
-        return self.val
-
-    def __str__(self):
-        if isinstance(self.val,flood):
-            return 'flood'
-        elif isinstance(self.val,fwd):
-            return '_'.join(str(self.val).split())
-        else:
-            return str(self.val)
-
-class fun(object):
-    def __init__(self,fn,var):
-        self.fn = fn
-        self.var = var
-
-    def __call__(self,state,event):
-        return self.fn(self.var(state,event))
-
-    def __str__(self):
-        return str(self.fn) + '(' + str(self.var) + ')'
-
-class var_test(object):
-    def __and__(self,other):
-        return var_test_and(self,other)
-
-class var_test_eq(var_test):
-    def __init__(self,l,r):
-        self.l = l
-        self.r = r
-
-    def __call__(self,state,event):
-        return self.l(state,event)==self.r(state,event)
-    
-    def __str__(self):
-        return '(' + str(self.l) + '=' + str(self.r) + ')'
-
-class var_test_ne(var_test):
-    def __init__(self,l,r):
-        self.l = l
-        self.r = r
-
-    def __call__(self,state,event):
-        return self.l(state,event)!=self.r(state,event)
-    
-    def __str__(self):
-        return '(' + str(self.l) + '!=' + str(self.r) + ')'
-
-class var_test_and(var_test):
-    def __init__(self,t1,t2):
-        self.t1 = t1
-        self.t2 = t2
-
-    def __call__(self,state,event):
-        return self.t1(state,event) and self.t2(state,event)
-    
-    def __str__(self):
-        return str(self.t1) + ' & ' + str(self.t2) 
-
-class evnt_test(object):
-    def __and__(self,other):
-        return evnt_test_and(self,other)
-
-class evnt_test_eq(evnt_test):
-    def __init__(self,l,r):
-        self.l = l
-        self.r = r
-
-    def __call__(self,state,event):
-        return self.l(state,event)==self.r(state,event)
-    
-    def __str__(self):
-        return 'True'
-
-class evnt_test_ne(evnt_test):
-    def __init__(self,l,r):
-        self.l = l
-        self.r = r
-
-    def __call__(self,state,event):
-        return self.l(state,event)!=self.r(state,event)
-    
-    def __str__(self):
-        return 'True'
-
-class evnt_test_and(evnt_test):
-    def __init__(self,t1,t2):
-        self.t1 = t1
-        self.t2 = t2
-
-    def __call__(self,state,event):
-        return self.t1(state,event) and self.t2(state,event)
-    
-    def __str__(self):
-        return str(self.t2) 
-
-
-def event_occured(name):
-    return not event(name)==const(None)
-
-class case(object):
-    def __init__(self,tst,rslt):
-        self.tst=tst
-        self.rslt=rslt
-
-    def __str__(self):
-        return str(self.tst) + '\t: ' + str(self.rslt)
-        
-class default(case):
-    def __init__(self,rslt):
-        super(default,self).__init__(const(True),rslt)
-
-class Transition(object):
-    def __init__(self):
-        self.cases = list()
-
-    def case(self,tst,rslt):
-        new_case = case(tst,rslt)
-        self.cases.append(new_case)
-
-    def default(self,rslt):
-        new_case = default(rslt)
-        self.cases.append(new_case)
-
-    def __call__(self,state,event):
-        for c in self.cases:
-            if c.tst(state,event):
-                return c.rslt(state,event)
-        raise RuntimeError
-
-    def to_str(self,vn):
-        r  = 'next(' + vn + ') :=\n' 
-        r += '\tcase\n'
-        for c in self.cases:
-            r += '\t\t' + str(c) + ';\n' 
-        r += '\tesac'
-        return r
-
-
-def transition(cases_fn):
-    class DecoratedTransition(Transition):
-        def __init__(self, *args, **kwargs):
-            Transition.__init__(self)
-            cases_fn(self, *args, **kwargs)
-
-    DecoratedTransition.__name__ = cases_fn.__name__
-    return DecoratedTransition()
-
-
-class VarDesc(dict):
-    __slots__ = ["_dict"]
-    def __init__(self,**kwargs):
-        self._dict = dict(endogenous=False,exogenous=False)
-        self._dict.update(dict(**kwargs))
-        
-    def get(self, key, default=None):
-        return self._dict.get(key, default)
-
-    def __getitem__(self, item):
-        return self._dict[item]
-
-class FSMDescription(object):
-    def __init__(self,**kwargs):
-        self.map = dict(**kwargs)
+from pyretic.pyresonance.language import *
 
 
 class Event(object):
@@ -222,59 +19,48 @@ class Event(object):
 
 
 class LpecFSM(DynamicPolicy):
-    def __init__(self,t,s,n,x):
+    def __init__(self,t,s,n,x,d):
         self.type = copy.copy(t)
         self.state = copy.copy(s)  # really variables, but all the variables together are the state
         self.event = dict()
         for k in self.state.keys():
             self.event[k] = None
-        self.endogenous_trans = n
-        self.exogenous_trans = x
+        self.trans = n
+        self.exogenous = x
+        self.dependencies = d
         self._topo_init = False
         super(LpecFSM,self).__init__(self.state['policy'])
 
+    def handle_change(self,var_name,is_event=False):
 
-    def get_dependent_vars(self,var_name):
-#        THIS SHOULD BE THE NEW LOGIC
-#        return self.next[var_name].get_dependent_vars()
+        # get the next value for this variable
+        next_val = self.trans[var_name](self.state,self.event)
 
-#       GET RID OF THIS HARD-CODED LOGIC
-        if var_name == 'infected':
-            return { 'policy' }
-        elif var_name == 'topo_change':
-            return {'port'}
-        elif var_name == 'port' : 
-            return {'policy','topo_change'}
-        elif var_name == 'server':
-            return {'policy'}
-        elif var_name == 'lb':
-            return {'policy'}
-        elif var_name == 'rate':
-            return {'policy'}
-        elif var_name == 'outgoing':
-            return { 'policy' }
-        elif var_name == 'auth':
-            return { 'policy' }
-        elif var_name == 'monitor':
-            return { 'policy' }
- 
-        else:
-            return set()
-         
-    def handle_change(self,var_name):
-        trans = self.endogenous_trans[var_name]
-        next_val = self.endogenous_trans[var_name](self.state,self.event)
+        # IF THIS IS AN EVENT, WE'VE NOW TAKEN IT INTO ACCOUNT
+        if is_event:
+            self.event[var_name] = None
+
+        # if the value has changed
         if next_val != self.state[var_name]:
             self.state[var_name] = next_val
+
+            # update policy, if appropriate
+            if var_name == 'policy':
+                self.policy = self.state['policy']
+
             # cascade the changes
-            dependent_vars = self.get_dependent_vars(var_name)
-            for v in dependent_vars:
+            for v in self.dependencies[var_name]:
                 self.handle_change(v)
 
-    def handle_event(self,event_name,event_val_rep):
-        event_type = self.type[event_name]
+        # IF THIS IS AN EVENT, THE CORRESPONDING STATE MAY NEED UPDATE
+        # (FOR DEFAULT CASE)
+        if is_event:
+            self.state[var_name] = \
+                self.trans[var_name](self.state,self.event)
 
-        # make sure event_val is typed correctly
+    def handle_event(self,event_name,event_val_rep):
+        # ensure event_val is typed correctly
+        event_type = self.type[event_name].py_type
         if isinstance(event_val_rep,str):
             if event_type == bool:
                 event_val = ast.literal_eval(event_val_rep)
@@ -287,12 +73,11 @@ class LpecFSM(DynamicPolicy):
             if not isinstance(event_val,event_type):
                 raise RuntimeError('event_val type mismatch (%s,%s)' % (type(event_val),event_type) )
 
+        # update event data structure and handle change
         self.event[event_name] = event_val
-        if not self.exogenous_trans[event_name]:
+        if not self.exogenous[event_name]:
             raise RuntimeError('var %s cannot be affected by external events!' % event_name)
-        self.handle_change(event_name)
-        self.event[event_name] = None
-
+        self.handle_change(event_name,is_event=True)
 
     def set_network(self,network):
         if not self._topo_init:
@@ -300,48 +85,32 @@ class LpecFSM(DynamicPolicy):
             return
 
         # topo_change IS A RESERVED NAME!!!
-        if 'topo_change' in self.exogenous_trans:
+        if 'topo_change' in self.exogenous:
             self.handle_event('topo_change',True)
-
-    def current_state_string(self):
-        return '{' + '\n'.join([str(name) + ' : ' + str(val) for name,val in self.state.items()]) + '}'
-
 
 
 class FSMPolicy(DynamicPolicy):
-    
     def __init__(self,lpec_fn,fsm_description):
         self.type = dict()
         self.state = dict()
-        self.endogenous_trans = dict()
-        self.exogenous_trans = dict()
+        self.trans = dict()
+        self.exogenous = dict()
+        self.deps = defaultdict(set)
         self.lpec_fn = lpec_fn
 
-        # def get_deps(nfs):
-        #     nf_event = nfs.event_fn
-        #     nf_state = nfs.state_fn
-            
-        #     def fn_deps(fn):
-        #         fn_src = inspect.getsource(fn)  
-        #         fn_src = textwrap.dedent(fn_src)
- 
-        #         print re.findall(r'\bv\w+', thesentence)
-                
         for var_name,var_def in fsm_description.map.items():
             self.type[var_name] = var_def['type']
             self.state[var_name] = var_def['init']
-            self.endogenous_trans[var_name] = var_def['endogenous']
-            self.exogenous_trans[var_name] = var_def['exogenous']
-        #    self.dep[var_name] = get_deps(nfs)
+            self.trans[var_name] = var_def['trans']
+            for e in events(var_def['trans']):
+                e.add_type(var_def['type'])
+                self.exogenous[var_name] = True
+            for v in variables(var_def['trans']):
+                self.deps[v].add(var_name)
         self.lpec_to_fsm = dict()
         self.initial_policy = self.state['policy']
         self.lock = Lock()
         super(FSMPolicy,self).__init__(self.initial_policy)
-
-    def changed(self):
-        print self
-        if self.notify:
-            self.notify(self)
 
     def event_handler(self,event):
 
@@ -366,7 +135,8 @@ class FSMPolicy(DynamicPolicy):
                 if lpec_k in self.lpec_to_fsm:
                     lpec_new = False
                 else:
-                    self.lpec_to_fsm[lpec_k] = LpecFSM(self.type,self.state,self.endogenous_trans,self.exogenous_trans)
+                    self.lpec_to_fsm[lpec_k] = LpecFSM(self.type,self.state,self.trans,
+                                                       self.exogenous,self.deps)
                     lpec_new = True
 
                 # have the lpec_fsm handle the event

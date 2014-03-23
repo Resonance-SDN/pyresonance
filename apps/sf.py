@@ -35,19 +35,23 @@ class sf(DynamicPolicy):
         ## SET UP TRANSITION FUNCTIONS
 
         @transition
-        def policy_trans(self):
-            self.case(var('outgoing')==const(True),const(identity))
-            self.default(const(ih_prd))
+        def outgoing(self):
+            self.case(occured(self.event),self.event)
+
+        @transition
+        def policy(self):
+            self.case(is_true(V('outgoing')),C(identity))
+            self.default(C(ih_prd))
 
         ### SET UP THE FSM DESCRIPTION
 
-        self.fsm_description = FSMDescription(
-            outgoing=VarDesc(type=bool, 
-                             init=False, 
-                             exogenous=True),
-            policy=VarDesc(type=[identity,ih_prd],
-                           init=ih_prd,
-                           endogenous=policy_trans))
+        self.fsm_def = FSMDef(
+            outgoing=FSMVar(type=BoolType(), 
+                            init=False, 
+                            trans=outgoing),
+            policy=FSMVar(type=Type(Policy,[identity,ih_prd]),
+                          init=ih_prd,
+                          trans=policy))
 
         ### DEFINE QUERY CALLBACKS
 
@@ -59,7 +63,7 @@ class sf(DynamicPolicy):
 
         ### SET UP POLICY AND EVENT STREAMS
 
-        fsm_pol = FSMPolicy(lpec,self.fsm_description)
+        fsm_pol = FSMPolicy(lpec,self.fsm_def)
         q = FwdBucket()
         q.register_callback(q_callback)
 
@@ -70,6 +74,8 @@ def main():
     internal_hosts = [IPAddr('10.0.0.3'),IPAddr('10.0.0.4')]
     ih_prd = union([match(srcip=h) for h in internal_hosts])
     pol = sf(internal_hosts,ih_prd)
+
+    print fsm_def_to_smv_model(pol.fsm_def)
 
     # For NuSMV
 #    mc = ModelChecker(pol)  

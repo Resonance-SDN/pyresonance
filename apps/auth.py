@@ -35,23 +35,27 @@ class auth(DynamicPolicy):
         ## SET UP TRANSITION FUNCTIONS
 
         @transition
-        def policy_trans(self):
-            self.case(var('auth')==const(True),const(identity))
-            self.default(const(drop))
+        def authenticated(self):
+            self.case(occured(self.event),self.event)
+
+        @transition
+        def policy(self):
+            self.case(is_true(V('authenticated')),C(identity))
+            self.default(C(drop))
 
         ### SET UP THE FSM DESCRIPTION
 
-        self.fsm_description = FSMDescription( 
-            auth=VarDesc(type=bool,
-                         init=False,
-                         exogenous=True),
-            policy=VarDesc(type=[drop,identity],
-                           init=drop,
-                           endogenous=policy_trans))
+        self.fsm_def = FSMDef( 
+            authenticated=FSMVar(type=BoolType(), 
+                            init=False, 
+                            trans=authenticated),
+            policy=FSMVar(type=Type(Policy,{drop,identity}),
+                          init=drop,
+                          trans=policy))
 
         ### SET UP POLICY AND EVENT STREAMS
 
-        fsm_pol = FSMPolicy(lpec,self.fsm_description)
+        fsm_pol = FSMPolicy(lpec,self.fsm_def)
         json_event = JSONEvent()
         json_event.register_callback(fsm_pol.event_handler)
 
@@ -60,6 +64,8 @@ class auth(DynamicPolicy):
 
 def main():
     pol = auth()
+
+    print fsm_def_to_smv_model(pol.fsm_def)
 
     # For NuSMV
 #    mc = ModelChecker(pol)  
