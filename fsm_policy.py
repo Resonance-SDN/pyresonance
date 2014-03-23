@@ -59,6 +59,10 @@ class LpecFSM(DynamicPolicy):
                 self.trans[var_name](self.state,self.event)
 
     def handle_event(self,event_name,event_val_rep):
+        # ignore events to other modules
+        if not event_name in self.type:
+            print "WARNING: '%s' events not handled by this module! Check if you are sending the '%s' event to correct TCP_port." % (event_name,event_name)
+            return
         # ensure event_val is typed correctly
         event_type = self.type[event_name].py_type
         if isinstance(event_val_rep,str):
