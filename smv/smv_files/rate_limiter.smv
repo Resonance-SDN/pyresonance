@@ -1,20 +1,25 @@
 MODULE main
   VAR
-    policy : {fwd2,fwd3,fwd4};
-    rate : 1..3;
+    policy	: {policy_337212563897699033245338971435270463530,policy_91447278467441041390399171817158164370,policy_307570358292051343788859313047439814038};
+    rate	: {1,2,3};
   ASSIGN
-   init(rate) := 1;
-   init(policy) := fwd2;
-   next(policy) := 
-     case
-       rate=1 : fwd2;
-       rate=2 : fwd3;
-       rate=3 : fwd4;
-     esac;
-  SPEC AG (rate=1 -> AX policy=fwd2)
-  SPEC AG (rate=2 -> AX policy=fwd3)
-  SPEC AG (rate=3 -> AX policy=fwd4)
-  SPEC AG (EF policy=fwd2)
-  SPEC AG (policy=fwd2 -> EF policy=fwd3)
-  SPEC AG (policy=fwd2 -> EF policy=fwd4)
- 
+    init(policy) := policy_91447278467441041390399171817158164370;
+    init(rate) := 1;
+    next(policy) :=
+	case
+		(rate=1)	: policy_91447278467441041390399171817158164370;
+		(rate=2)	: policy_307570358292051343788859313047439814038;
+		(rate=3)	: policy_337212563897699033245338971435270463530;
+		TRUE	: policy;
+	esac;
+    next(rate) :=
+	case
+		TRUE	: {1,2,3};
+		TRUE	: rate;
+	esac;
+
+SPEC AG (rate=1 -> AX policy=policy_91447278467441041390399171817158164370)
+SPEC AG (rate=2 -> AX policy=policy_307570358292051343788859313047439814038)
+SPEC AG (rate=3 -> AX policy=policy_337212563897699033245338971435270463530)
+SPEC AG (EF policy=policy_91447278467441041390399171817158164370)
+SPEC AG (policy=policy_91447278467441041390399171817158164370 -> EF policy=policy_307570358292051343788859313047439814038)

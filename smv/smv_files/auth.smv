@@ -1,0 +1,18 @@
+MODULE main
+  VAR
+    policy	: {identity,drop};
+    authenticated	: boolean;
+  ASSIGN
+    init(policy) := drop;
+    init(authenticated) := FALSE;
+    next(policy) :=
+	case
+		authenticated	: identity;
+		TRUE	: drop;
+	esac;
+    next(authenticated) :=
+	case
+		TRUE	: {FALSE,TRUE};
+		TRUE	: authenticated;
+	esac;
+

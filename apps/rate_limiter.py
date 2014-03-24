@@ -40,7 +40,7 @@ class rate_limiter(DynamicPolicy):
 
         ### DEFINE INTERNAL METHODS
         
-        self.links = [2,3,4]
+        rates = [1,2,3]
 
         def interswitch():
             return if_(match(inport=2),fwd(1),fwd(2))
@@ -52,11 +52,6 @@ class rate_limiter(DynamicPolicy):
             r = if_(match_inter,interswitch(), if_(match_inport, fwd(1), drop))
             
             return r
-
-        def change_rate(rate):
-            outport = rate+1
-            return rate_limit_policy(outport)
-
 
         def rate_limit_policy(i):
             match_from_edge = (union([match(switch=1),match(switch=5)]) & match(inport=1))
@@ -72,24 +67,27 @@ class rate_limiter(DynamicPolicy):
 
         ### SET UP TRANSITION FUNCTIONS
 
-        def policy_trans(state):
-            print 'Change rate policy to: ',state['rate']
-            return change_rate(state['rate'])
+        @transition
+        def rate(self):
+            self.case(occured(self.event),self.event)
+
+        @transition
+        def policy(self):
+            for i in rates:
+                self.case(V('rate')==C(i), C(rate_limit_policy(i+1)))
 
         ### SET UP THE FSM DESCRIPTION
     
-        self.fsm_description = FSMDescription( 
-            rate=VarDesc(type=int,
+        self.fsm_def = FSMDef( 
+            rate=FSMVar(type=Type(int,set(rates)),
                          init=1,
-                         endogenous=False,
-                         exogenous=True),
-            policy=VarDesc(type=[rate_limit_policy(i) for i in self.links ],
+                         trans=rate),
+            policy=FSMVar(type=Type(Policy,set([rate_limit_policy(i+1) for i in rates ])),
                            init=rate_limit_policy(2),
-                           endogenous=policy_trans,
-                           exogenous=False))
+                           trans=policy))
 
         # Instantiate FSMPolicy, start/register JSON handler.
-        fsm_pol = FSMPolicy(lpec, self.fsm_description)
+        fsm_pol = FSMPolicy(lpec, self.fsm_def)
         json_event = JSONEvent()
         json_event.register_callback(fsm_pol.event_handler)
         
@@ -99,7 +97,19 @@ class rate_limiter(DynamicPolicy):
 def main():
     pol = rate_limiter()
 
-    mc = ModelChecker(pol)
+    # For NuSMV
+    smv_str = fsm_def_to_smv_model(pol.fsm_def)
+    mc = ModelChecker(smv_str,'rate_limiter')  
+
+    ## Add specs 
+    mc.add_spec("SPEC AG (rate=1 -> AX policy=policy_91447278467441041390399171817158164370)")
+    mc.add_spec("SPEC AG (rate=2 -> AX policy=policy_307570358292051343788859313047439814038)")
+    mc.add_spec("SPEC AG (rate=3 -> AX policy=policy_337212563897699033245338971435270463530)")
+    mc.add_spec("SPEC AG (EF policy=policy_91447278467441041390399171817158164370)")
+    mc.add_spec("SPEC AG (policy=policy_91447278467441041390399171817158164370 -> EF policy=policy_307570358292051343788859313047439814038)")
+ 
+    mc.save_as_smv_file()
+    mc.verify()
 
 #    return pol
     return pol >> monitor()

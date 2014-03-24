@@ -1,23 +1,23 @@
 MODULE main
   VAR
-    policy : {drop,identity};
-    infected : boolean;
+    policy	: {identity,drop};
+    infected	: boolean;
   ASSIGN
-   init(infected) := FALSE;
-   init(policy) := identity;
-   next(infected) := 
-     case
-       infected & !(policy=drop) : TRUE;
-       !infected & !(policy=identity) : FALSE;
-       TRUE : {FALSE,TRUE};
-     esac;
-   next(policy) := 
-     case
-       infected  : drop;
-       !infected : identity;
-     esac;
-  SPEC AG infected -> (policy=drop)
-  SPEC AG !infected -> policy=identity
-  SPEC AG EF policy=identity
-  SPEC AG EF policy=drop
-  SPEC EF A [ policy=identity U infected ]
+    init(policy) := identity;
+    init(infected) := FALSE;
+    next(policy) :=
+	case
+		infected	: drop;
+		TRUE	: identity;
+	esac;
+    next(infected) :=
+	case
+		TRUE	: {FALSE,TRUE};
+		TRUE	: infected;
+	esac;
+
+SPEC AG infected -> (policy=drop)
+SPEC AG !infected -> policy=identity
+SPEC AG EF policy=identity
+SPEC AG EF policy=drop
+SPEC EF A [ policy=identity U infected ]

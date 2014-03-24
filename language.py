@@ -1,4 +1,5 @@
 from pyretic.lib.corelib import *
+import hashlib
 
 def to_smv(i):
     if isinstance(i,flood):
@@ -13,8 +14,11 @@ def to_smv(i):
         return 'FALSE'
     elif s=='True':
         return 'TRUE'
-    else:
+    elif s.isdigit():
         return s
+    else: 
+        policynum = int(hashlib.md5(s).hexdigest(), 16)
+        return 'policy_' + str(policynum)
 
 ### Types
 
@@ -91,7 +95,9 @@ class C(CaseAtom):
         elif isinstance(self.val,fwd):
             return 'C(' + '_'.join(str(self.val).split()) + ')'
         else:
-            return 'C(' + str(self.val) + ')'
+#            return 'C(' + str(self.val) + ')'
+            policynum = int(hashlib.md5(str(self.val)).hexdigest(), 16)
+            return 'C(' + 'policy_' + str(policynum) + ')'
 
     def model(self):
         return to_smv(self.val)
@@ -224,7 +230,7 @@ class Transition(object):
         r += '\tcase\n'
         for c in self.cases:
             r += '\t\t' + str(c) + ';\n' 
-        r += '\tesac'
+        r += '\tesac;'
         return r
 
     def model(self):
@@ -232,7 +238,7 @@ class Transition(object):
         r += '\tcase\n'
         for c in self.cases:
             r += '\t\t' + c.model() + ';\n' 
-        r += '\tesac'
+        r += '\tesac;'
         return r
 
 def transition(cases_fn):
@@ -331,7 +337,7 @@ def fsm_def_to_smv_model(fsm_def):
 
     s+= '  ASSIGN\n'
     for k,v in fsm_def.map.items():
-        s += '    init(%s) := %s\n' % (k,to_smv(v['init']))
+        s += '    init(%s) := %s;\n' % (k,to_smv(v['init']))
 
     for k,v in fsm_def.map.items():
         s += '    '+v['trans'].model()+'\n'

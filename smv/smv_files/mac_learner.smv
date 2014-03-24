@@ -1,27 +1,45 @@
 MODULE main
   VAR
-    topo_change : boolean;
-    port : 0..2;
+    policy	: {fwd_3,fwd_6,fwd_4,fwd_8,fwd_2,flood,fwd_5,fwd_7,fwd_1};
+    topo_change	: boolean;
+    port	: {0,1,2,3,4,5,6,7,8};
   ASSIGN
-    init(port) := 0;
+    init(policy) := flood;
     init(topo_change) := FALSE;
-    next(port) := 
-      case
-        topo_change       : 0;
-        next(topo_change) : 0;
-        port=0            : 0..2;
-        TRUE              : port;
-      esac;
-  FAIRNESS
-    topo_change;
-  SPEC AG (port=0 -> AG EF port>0)
-  SPEC ! AG A [ port>0 U topo_change ]
-  SPEC AG (port>0 -> A [ port>0 U topo_change ] )
-  SPEC AG (port=1 -> A [ port=1 U topo_change ] )
-  SPEC ! AG (port=2 -> A [ port=1 U topo_change ] )
-  SPEC ! AG (port=1 -> EX port=2)
-  SPEC AG (port=1 -> EF port=2)
-  SPEC AG (port=1 -> A [ !(port=2) U port=0 ])
-  SPEC AG (port=1 -> A [ !(port=2) U topo_change ])
-  SPEC AG (port=1 -> EX port=1)
-  SPEC AG (port=1 -> EX port=0)
+    init(port) := 0;
+    next(policy) :=
+	case
+		(port=0)	: flood;
+		(port=1)	: fwd_1;
+		(port=2)	: fwd_2;
+		(port=3)	: fwd_3;
+		(port=4)	: fwd_4;
+		(port=5)	: fwd_5;
+		(port=6)	: fwd_6;
+		(port=7)	: fwd_7;
+		(port=8)	: fwd_8;
+		TRUE	: policy;
+	esac;
+    next(topo_change) :=
+	case
+		TRUE	: {FALSE,TRUE};
+		TRUE	: FALSE;
+	esac;
+    next(port) :=
+	case
+		(port=0)	: {0,1,2,3,4,5,6,7,8};
+		topo_change	: 0;
+		TRUE	: port;
+	esac;
+
+FAIRNESS
+  topo_change;
+SPEC AG (port=0 -> AG EF port>0)
+SPEC ! AG A [ port>0 U topo_change ]
+SPEC AG (port>0 -> A [ port>0 U topo_change ] )
+SPEC AG (port=1 -> A [ port=1 U topo_change ] )
+SPEC ! AG (port=2 -> A [ port=1 U topo_change ] )
+SPEC ! AG (port=1 -> EX port=2)
+SPEC AG (port=1 -> EF port=2)
+SPEC AG (port=1 -> A [ !(port=2) U port=0 ])
+SPEC AG (port=1 -> A [ !(port=2) U topo_change ])

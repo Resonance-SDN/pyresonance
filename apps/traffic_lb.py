@@ -36,7 +36,7 @@ class traffic_lb(DynamicPolicy):
 
         ### DEFINE INTERNAL METHODS
         
-        self.links = [2,3,4]
+        self.links = [1,2,3]
 
         def interswitch():
             return if_(match(inport=2),fwd(1),fwd(2))
@@ -50,7 +50,7 @@ class traffic_lb(DynamicPolicy):
             return r
 
         def randomly_choose_link():
-            return traffic_lb_policy(choice(self.links))
+            return traffic_lb_policy(choice(self.links)+1)
 
         def traffic_lb_policy(i):
             match_from_edge = (union([match(switch=1),match(switch=5)]) & match(inport=1))
@@ -66,29 +66,28 @@ class traffic_lb(DynamicPolicy):
 
 
         ### SET UP TRANSITION FUNCTIONS
+        @transition
+        def lb(self):
+            self.case(occured(self.event),self.event)
 
-        def policy_trans(state):
-            if state['lb']:
-                return randomly_choose_link()
-            else:
-                return traffic_lb_policy(2) # default output link w/o traffic lb
+        @transition
+        def policy(self):
+            self.case(is_true(V('lb')),C(randomly_choose_link()))
+            self.default(C(traffic_lb_policy(2)))
 
 
         ### SET UP THE FSM DESCRIPTION
     
-        self.fsm_description = FSMDescription( 
-            lb=VarDesc(type=bool,
+        self.fsm_def = FSMDef( 
+            lb=FSMVar(type=BoolType(),
                          init=False,
-                         endogenous=False,
-                         exogenous=True),
-            policy=VarDesc(type=[traffic_lb_policy(i) for i in self.links ],
+                         trans=lb),
+            policy=FSMVar(type=Type(Policy,set([traffic_lb_policy(i+1) for i in self.links ])),
                            init=traffic_lb_policy(2),
-                           endogenous=policy_trans,
-                           exogenous=False))
-
+                           trans=policy))
 
         # Instantiate FSMPolicy, start/register JSON handler.
-        fsm_pol = FSMPolicy(lpec, self.fsm_description)
+        fsm_pol = FSMPolicy(lpec, self.fsm_def)
         json_event = JSONEvent()
         json_event.register_callback(fsm_pol.event_handler)
         

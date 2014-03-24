@@ -53,19 +53,23 @@ class monitor(DynamicPolicy):
         ## SET UP TRANSITION FUNCTIONS
 
         @transition
+        def mon(self):
+            self.case(occured(self.event),self.event)
+
+        @transition
         def policy_trans(self):
-            self.case(var('monitor')==const(True),const(monitoring()))
-            self.default(const(identity))
+            self.case(is_true(V('monitor')),C(monitoring()))
+            self.default(C(identity))
 
         ### SET UP THE FSM DESCRIPTION
 
-        self.fsm_description = FSMDescription(
-            monitor=VarDesc(type=bool, 
+        self.fsm_def = FSMDef(
+            monitor=FSMVar(type=BoolType(), 
                              init=False, 
-                             exogenous=True),
-            policy=VarDesc(type=[identity,monitoring()],
+                             trans=mon),
+            policy=FSMVar(type=Type(Policy,set([identity,monitoring()])),
                            init=monitoring(),
-                           endogenous=policy_trans))
+                           trans=policy_trans))
 
 
         ### Set up monitoring
@@ -74,7 +78,7 @@ class monitor(DynamicPolicy):
 
         ### SET UP POLICY AND EVENT STREAMS
 
-        fsm_pol = FSMPolicy(lpec,self.fsm_description)
+        fsm_pol = FSMPolicy(lpec,self.fsm_def)
         json_event = JSONEvent()
         json_event.register_callback(fsm_pol.event_handler)
 

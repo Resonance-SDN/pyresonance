@@ -4,8 +4,7 @@ from pyretic.lib.std import *
 
 from pyretic.pyresonance.fsm_policy import *
 from pyretic.pyresonance.drivers.json_event import JSONEvent
-from pyretic.pyresonance.smv.translate import *
-
+from pyretic.pyresonance.smv.model_checker import *
 
 
 #####################################################################################################
@@ -65,9 +64,13 @@ class auth(DynamicPolicy):
 def main():
     pol = auth()
 
-    print fsm_def_to_smv_model(pol.fsm_def)
-
     # For NuSMV
-#    mc = ModelChecker(pol)  
+    smv_str = fsm_def_to_smv_model(pol.fsm_def)
+    mc = ModelChecker(smv_str,'auth')  
+
+    ## Add specs 
+
+    mc.save_as_smv_file()
+    mc.verify()
 
     return pol >> flood()
