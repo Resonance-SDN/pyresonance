@@ -6,7 +6,7 @@ from pyretic.lib.query import *
 
 from pyretic.pyresonance.fsm_policy import *
 from pyretic.pyresonance.drivers.json_event import JSONEvent 
-from pyretic.pyresonance.smv.translate import *
+from pyretic.pyresonance.smv.model_checker import *
 
  
 #####################################################################################################
@@ -74,28 +74,29 @@ class serverlb(DynamicPolicy):
  
             
         ## SET UP TRANSITION FUNCTIONS
-        
-        def policy_trans(state):
-            if state['server']:
-                return randomly_choose_server(self.servers)
-            else:
-                return randomly_choose_server(self.servers)
+ 
+        @transition    
+        def server_trans(self):
+            self.case(occured(self.event),self.event)
+ 
+        @transition    
+        def policy_trans(self):
+            self.case(is_true(V('server')),C(randomly_choose_server(self.servers)))
+            self.default(C(server_i_policy(1)))
 
 
         ### SET UP THE FSM DESCRIPTION
     
-        self.fsm_description = FSMDescription(
-            server=VarDesc(type=bool, 
-                             init=False, 
-                             endogenous=False,
-                             exogenous=True),
-            policy=VarDesc(type=[server_i_policy(i) for i in self.servers ],
+        self.fsm_def = FSMDef(
+            server=FSMVar(type=BoolType(), 
+                           init=False, 
+                           trans=True),
+            policy=FSMVar(type=Type(Policy,set([server_i_policy(i) for i in self.servers])),
                            init=server_i_policy(choice(self.servers.keys())),
-                           endogenous=policy_trans,
-                           exogenous=True))
+                           trans=policy_trans))
    
         # Instantiate FSMPolicy, start/register JSON handler.
-        fsm_pol = FSMPolicy(lpec, self.fsm_description)
+        fsm_pol = FSMPolicy(lpec, self.fsm_def)
         json_event = JSONEvent()
         json_event.register_callback(fsm_pol.event_handler)
         
@@ -105,7 +106,12 @@ class serverlb(DynamicPolicy):
 def main():
     pol = serverlb()
 
-#    mc = ModelChecker(pol)
+    # For NuSMV
+    smv_str = fsm_def_to_smv_model(pol.fsm_def)
+    mc = ModelChecker(smv_str,'server_lb')  
+
+    ## Add specs
+    mc.save_as_smv_file()
+    mc.verify()
 
     return pol >> flood()
-
