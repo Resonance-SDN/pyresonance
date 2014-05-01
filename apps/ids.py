@@ -70,11 +70,11 @@ def main():
     mc = ModelChecker(smv_str,'ids')  
 
     ## Add specs
-    mc.add_spec("SPEC AG infected -> (policy=drop)")
-    mc.add_spec("SPEC AG !infected -> policy=identity")
-    mc.add_spec("SPEC AG EF policy=identity")
-    mc.add_spec("SPEC AG EF policy=drop")
-    mc.add_spec("SPEC EF A [ policy=identity U infected ]")
+#    mc.add_spec("SPEC AG infected -> policy=drop")
+#    mc.add_spec("SPEC AG !infected -> policy=identity")
+#    mc.add_spec("SPEC AG EF policy=identity")
+#    mc.add_spec("SPEC AG EF policy=drop")
+#    mc.add_spec("SPEC EF A [ policy=identity U infected ]")
 
     mc.save_as_smv_file()
     mc.verify()

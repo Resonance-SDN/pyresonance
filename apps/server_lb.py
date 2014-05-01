@@ -76,13 +76,17 @@ class serverlb(DynamicPolicy):
         ## SET UP TRANSITION FUNCTIONS
  
         @transition    
-        def server_trans(self):
+        def server(self):
             self.case(occured(self.event),self.event)
  
         @transition    
-        def policy_trans(self):
+        def policy(self):
+            self.servers = {'10.0.0.3': '00:00:00:00:00:03',
+                   '10.0.0.4': '00:00:00:00:00:04', 
+                   '10.0.0.5': '00:00:00:00:00:05'}
+
             self.case(is_true(V('server')),C(randomly_choose_server(self.servers)))
-            self.default(C(server_i_policy(1)))
+            self.default(C(server_i_policy(self.servers.keys()[1])))
 
 
         ### SET UP THE FSM DESCRIPTION
@@ -90,10 +94,10 @@ class serverlb(DynamicPolicy):
         self.fsm_def = FSMDef(
             server=FSMVar(type=BoolType(), 
                            init=False, 
-                           trans=True),
+                           trans=server),
             policy=FSMVar(type=Type(Policy,set([server_i_policy(i) for i in self.servers])),
                            init=server_i_policy(choice(self.servers.keys())),
-                           trans=policy_trans))
+                           trans=policy))
    
         # Instantiate FSMPolicy, start/register JSON handler.
         fsm_pol = FSMPolicy(lpec, self.fsm_def)
