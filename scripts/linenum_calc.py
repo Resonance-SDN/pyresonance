@@ -13,6 +13,7 @@ def getlines(dirs):
         if flag== 0 and main_flag == 0:
             line = line.strip(' ')
             match_1 = re.match('(from .* )*import ',line)
+            match_pr = re.match('print ',line)
             match_2 = re.search(',\s*$',line)
             if line.startswith('#') or line.startswith('//') or line =='\n' or line.startswith('"""') or line.startswith("'''"):
                 if line.startswith('"""') or line.startswith("'''"):
@@ -26,6 +27,11 @@ def getlines(dirs):
             # import statements                    
             elif match_1:
                 continue
+
+            # print statements                    
+            elif match_pr:
+                continue
+
 
             elif match_2:
                 comma_flag = 1

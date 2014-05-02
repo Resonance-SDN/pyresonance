@@ -7,6 +7,7 @@ from pyretic.lib.query import *
 from pyretic.pyresonance.fsm_policy import *
 from pyretic.pyresonance.drivers.json_event import JSONEvent 
 from pyretic.pyresonance.smv.model_checker import *
+from pyretic.pyresonance.apps.mac_learner import *
 
  
 #####################################################################################################
@@ -118,4 +119,4 @@ def main():
     mc.save_as_smv_file()
     mc.verify()
 
-    return pol >> flood()
+    return pol >> mac_learner()

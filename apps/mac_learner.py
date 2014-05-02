@@ -107,6 +107,11 @@ def main():
     mc.add_spec("SPEC AG (port=1 -> A [ !(port=2) U topo_change ])")
 
     mc.save_as_smv_file()
+    import datetime as dt
+    n1=dt.datetime.now()
     mc.verify()
+    n2=dt.datetime.now()
+
+    print (n2-n1).microseconds
 
     return pol

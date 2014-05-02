@@ -1,14 +1,14 @@
 MODULE main
   VAR
-    policy	: {identity,drop};
+    policy	: {policy_339328224058026687044791369749723531839,policy_147031024884311641277281549037884267593};
     infected	: boolean;
   ASSIGN
-    init(policy) := identity;
+    init(policy) := policy_339328224058026687044791369749723531839;
     init(infected) := FALSE;
     next(policy) :=
 	case
-		infected	: drop;
-		TRUE	: identity;
+		infected	: policy_147031024884311641277281549037884267593;
+		TRUE	: policy_339328224058026687044791369749723531839;
 	esac;
     next(infected) :=
 	case
@@ -16,8 +16,8 @@ MODULE main
 		TRUE	: infected;
 	esac;
 
-SPEC AG infected -> (policy=drop)
-SPEC AG !infected -> policy=identity
-SPEC AG EF policy=identity
-SPEC AG EF policy=drop
-SPEC EF A [ policy=identity U infected ]
+SPEC AG infected -> policy=policy_147031024884311641277281549037884267593
+SPEC AG !infected -> policy=policy_339328224058026687044791369749723531839
+SPEC AG EF policy=policy_339328224058026687044791369749723531839
+SPEC AG EF policy=policy_147031024884311641277281549037884267593
+SPEC EF A [ policy=policy_339328224058026687044791369749723531839 U infected ]
