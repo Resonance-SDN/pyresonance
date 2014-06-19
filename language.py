@@ -1,5 +1,33 @@
 from pyretic.lib.corelib import *
 import hashlib
+import operator
+
+## Used globally
+policy_to_name_map = {}
+
+
+def as_comment(s):
+    s = '-- ' + s
+    s = s.replace('\n', '\n-- ')
+    return s
+
+def policy_to_hash(policy_set, p):
+    if isinstance(p,flood):
+        return 'flood'
+    elif isinstance(p,fwd):
+        return '_'.join(str(p).split())
+    elif isinstance(p,union):
+        return 'union'
+    
+    s = str(p) 
+    if s=='False':
+        return 'FALSE'
+    elif s=='True':
+        return 'TRUE'
+    elif s.isdigit():
+        return s
+    else: 
+        policy_set.add(s)
 
 def to_smv(i):
     if isinstance(i,flood):
@@ -17,8 +45,7 @@ def to_smv(i):
     elif s.isdigit():
         return s
     else: 
-        policynum = int(hashlib.md5(s).hexdigest(), 16)
-        return 'policy_' + str(policynum)
+        return policy_to_name_map[s]
 
 ### Types
 
@@ -326,6 +353,21 @@ class FSMDef(object):
         self.map = dict(**kwargs)
 
 def fsm_def_to_smv_model(fsm_def):
+
+
+    # First, see if there are complex policies. 
+    # If so, number them, and save info.
+    policy_set = set()
+    for k,v in fsm_def.map.items():
+        t = v['type']
+        if t.py_type!=bool:
+            tmp_list = list(t.dom)
+            for p in t.dom:
+                policy_to_hash(policy_set, p)
+    for idx,p in enumerate(policy_set):
+        policy_to_name_map[p] = 'policy_'+str(idx+1)
+
+    # Start        
     s =  'MODULE main\n'
     s += '  VAR\n'
     for k,v in fsm_def.map.items():
@@ -342,6 +384,24 @@ def fsm_def_to_smv_model(fsm_def):
     for k,v in fsm_def.map.items():
         s += '    '+v['trans'].model()+'\n'
 
-    return s
+    ## Add comment about policy_name to actual_policy mapping
+    mapping_str = ' \n\n=====================================================================\n'
+    mapping_str = mapping_str + 'PolicyName (used in NuSMV) to ActualPolicy (used in Pyreric) Mapping\n'
+    mapping_str = mapping_str + '=====================================================================\n'
+    sorted_tuple = sorted(policy_to_name_map.iteritems(), key=operator.itemgetter(1))
+  
+    for p in sorted_tuple:
+        policy = p[0]
+        pname = p[1]
+        mapping_str = mapping_str + '---------------------------------------------\n'
+        mapping_str = mapping_str + pname + ': (shown below)\n'
+        mapping_str = mapping_str + '---------------------------------------------\n'
+        mapping_str = mapping_str + policy  + '\n'
+        mapping_str = mapping_str + '---------------------------------------------\n\n'
 
+    # Make it as comment, and add to NuSMV input file.        
+    mapping_str = as_comment(mapping_str)
+    s = s + mapping_str
+
+    return s
 
