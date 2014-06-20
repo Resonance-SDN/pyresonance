@@ -6,7 +6,7 @@ from pyretic.lib.query import *
 
 from pyretic.pyresonance.fsm_policy import *
 from pyretic.pyresonance.drivers.json_event import JSONEvent 
-from pyretic.pyresonance.smv.translate import *
+from pyretic.pyresonance.smv.model_checker import *
 from pyretic.pyresonance.apps.mac_learner import *
 
     
@@ -97,7 +97,12 @@ class traffic_lb(DynamicPolicy):
 def main():
     pol = traffic_lb()
 
-#    mc = ModelChecker(pol)
+    # For NuSMV
+    smv_str = fsm_def_to_smv_model(pol.fsm_def)
+    mc = ModelChecker(smv_str,'traffic_lb')  
+
+    ## Add specs
+    mc.save_as_smv_file()
+    mc.verify()
 
     return pol
-

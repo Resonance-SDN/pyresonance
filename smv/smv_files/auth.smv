@@ -1,18 +1,35 @@
 MODULE main
   VAR
-    policy	: {identity,drop};
+    policy	: {policy_2,policy_1};
     authenticated	: boolean;
   ASSIGN
-    init(policy) := drop;
+    init(policy) := policy_1;
     init(authenticated) := FALSE;
     next(policy) :=
 	case
-		authenticated	: identity;
-		TRUE	: drop;
+		authenticated	: policy_2;
+		TRUE	: policy_1;
 	esac;
     next(authenticated) :=
 	case
 		TRUE	: {FALSE,TRUE};
 		TRUE	: authenticated;
 	esac;
-
+--  
+-- 
+-- =====================================================================
+-- PolicyName (used in NuSMV) to ActualPolicy (used in Pyreric) Mapping
+-- =====================================================================
+-- ---------------------------------------------
+-- policy_1: (shown below)
+-- ---------------------------------------------
+-- drop
+-- ---------------------------------------------
+-- 
+-- ---------------------------------------------
+-- policy_2: (shown below)
+-- ---------------------------------------------
+-- identity
+-- ---------------------------------------------
+-- 
+-- 

@@ -1,6 +1,6 @@
 MODULE main
   VAR
-    policy	: {fwd_3,fwd_7,flood,fwd_6,fwd_1,fwd_5,fwd_2,fwd_4,fwd_8};
+    policy	: {fwd_8,fwd_3,fwd_6,fwd_4,fwd_2,flood,fwd_5,fwd_1,fwd_7};
     topo_change	: boolean;
     port	: {0,1,2,3,4,5,6,7,8};
   ASSIGN
@@ -31,7 +31,12 @@ MODULE main
 		topo_change	: 0;
 		TRUE	: port;
 	esac;
-
+--  
+-- 
+-- =====================================================================
+-- PolicyName (used in NuSMV) to ActualPolicy (used in Pyreric) Mapping
+-- =====================================================================
+-- 
 FAIRNESS
   topo_change;
 SPEC AG (port=0 -> AG EF port>0)

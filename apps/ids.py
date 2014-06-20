@@ -70,11 +70,11 @@ def main():
     mc = ModelChecker(smv_str,'ids')  
 
     ## Add specs
-    mc.add_spec("SPEC AG infected -> policy=policy_147031024884311641277281549037884267593")
-    mc.add_spec("SPEC AG !infected -> policy=policy_339328224058026687044791369749723531839")
-    mc.add_spec("SPEC AG EF policy=policy_339328224058026687044791369749723531839")
-    mc.add_spec("SPEC AG EF policy=policy_147031024884311641277281549037884267593")
-    mc.add_spec("SPEC EF A [ policy=policy_339328224058026687044791369749723531839 U infected ]")
+    mc.add_spec("SPEC AG infected -> policy=policy_1")
+    mc.add_spec("SPEC AG !infected -> policy=policy_2")
+    mc.add_spec("SPEC AG EF policy=policy_2")
+    mc.add_spec("SPEC AG EF policy=policy_1")
+    mc.add_spec("SPEC EF A [ policy=policy_2 U infected ]")
 
     mc.save_as_smv_file()
 
@@ -84,7 +84,5 @@ def main():
     n2=dt.datetime.now()
 
     print (n2-n1).microseconds
-
-
 
     return pol >> flood()

@@ -1,23 +1,40 @@
 MODULE main
   VAR
-    policy	: {policy_339328224058026687044791369749723531839,policy_147031024884311641277281549037884267593};
+    policy	: {policy_2,policy_1};
     infected	: boolean;
   ASSIGN
-    init(policy) := policy_339328224058026687044791369749723531839;
+    init(policy) := policy_2;
     init(infected) := FALSE;
     next(policy) :=
 	case
-		infected	: policy_147031024884311641277281549037884267593;
-		TRUE	: policy_339328224058026687044791369749723531839;
+		infected	: policy_1;
+		TRUE	: policy_2;
 	esac;
     next(infected) :=
 	case
 		TRUE	: {FALSE,TRUE};
 		TRUE	: infected;
 	esac;
-
-SPEC AG infected -> policy=policy_147031024884311641277281549037884267593
-SPEC AG !infected -> policy=policy_339328224058026687044791369749723531839
-SPEC AG EF policy=policy_339328224058026687044791369749723531839
-SPEC AG EF policy=policy_147031024884311641277281549037884267593
-SPEC EF A [ policy=policy_339328224058026687044791369749723531839 U infected ]
+--  
+-- 
+-- =====================================================================
+-- PolicyName (used in NuSMV) to ActualPolicy (used in Pyreric) Mapping
+-- =====================================================================
+-- ---------------------------------------------
+-- policy_1: (shown below)
+-- ---------------------------------------------
+-- drop
+-- ---------------------------------------------
+-- 
+-- ---------------------------------------------
+-- policy_2: (shown below)
+-- ---------------------------------------------
+-- identity
+-- ---------------------------------------------
+-- 
+-- 
+SPEC AG infected -> policy=policy_1
+SPEC AG !infected -> policy=policy_2
+SPEC AG EF policy=policy_2
+SPEC AG EF policy=policy_1
+SPEC EF A [ policy=policy_2 U infected ]
