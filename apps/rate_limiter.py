@@ -6,7 +6,7 @@ from pyretic.lib.query import *
 
 from pyretic.pyresonance.fsm_policy import *
 from pyretic.pyresonance.drivers.json_event import JSONEvent 
-from pyretic.pyresonance.smv.translate import *
+from pyretic.pyresonance.smv.model_checker import *
 from pyretic.pyresonance.apps.mac_learner import *
 from pyretic.pyresonance.apps.monitor import *
 
@@ -102,11 +102,12 @@ def main():
     mc = ModelChecker(smv_str,'rate_limiter')  
 
     ## Add specs 
-    mc.add_spec("SPEC AG (rate=1 -> AX policy=policy_91447278467441041390399171817158164370)")
-    mc.add_spec("SPEC AG (rate=2 -> AX policy=policy_307570358292051343788859313047439814038)")
-    mc.add_spec("SPEC AG (rate=3 -> AX policy=policy_337212563897699033245338971435270463530)")
-    mc.add_spec("SPEC AG (EF policy=policy_91447278467441041390399171817158164370)")
-    mc.add_spec("SPEC AG (policy=policy_91447278467441041390399171817158164370 -> EF policy=policy_307570358292051343788859313047439814038)")
+    mc.add_spec("SPEC AG (rate=1 -> AX policy=policy_1)")
+    mc.add_spec("SPEC AG (rate=2 -> AX policy=policy_3)")
+    mc.add_spec("SPEC AG (rate=3 -> AX policy=policy_2)")
+    mc.add_spec("SPEC AG (EF policy=policy_1)")
+    mc.add_spec("SPEC policy=policy_1 -> EX policy=policy_1")
+    mc.add_spec("SPEC AG (policy=policy_1 -> EF policy=policy_2)")
  
     mc.save_as_smv_file()
     mc.verify()

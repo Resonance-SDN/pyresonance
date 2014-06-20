@@ -1,21 +1,19 @@
 MODULE main
   VAR
-    policy	: {policy_2,policy_1,policy_3};
-    rate	: {1,2,3};
+    policy	: {policy_1,policy_2,policy_3};
+    lb	: boolean;
   ASSIGN
     init(policy) := policy_1;
-    init(rate) := 1;
+    init(lb) := FALSE;
     next(policy) :=
 	case
-		(rate=1)	: policy_1;
-		(rate=2)	: policy_3;
-		(rate=3)	: policy_2;
-		TRUE	: policy;
+		lb	: policy_1;
+		TRUE	: policy_1;
 	esac;
-    next(rate) :=
+    next(lb) :=
 	case
-		TRUE	: {1,2,3};
-		TRUE	: rate;
+		TRUE	: {FALSE,TRUE};
+		TRUE	: lb;
 	esac;
 --  
 -- 
@@ -131,9 +129,3 @@ MODULE main
 -- ---------------------------------------------
 -- 
 -- 
-SPEC AG (rate=1 -> AX policy=policy_1)
-SPEC AG (rate=2 -> AX policy=policy_3)
-SPEC AG (rate=3 -> AX policy=policy_2)
-SPEC AG (EF policy=policy_1)
-SPEC policy=policy_1 -> EX policy=policy_1
-SPEC AG (policy=policy_1 -> EF policy=policy_2)

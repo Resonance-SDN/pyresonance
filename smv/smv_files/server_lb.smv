@@ -1,0 +1,131 @@
+MODULE main
+  VAR
+    policy	: {policy_3,policy_1,policy_2};
+    server	: boolean;
+  ASSIGN
+    init(policy) := policy_2;
+    init(server) := FALSE;
+    next(policy) :=
+	case
+		server	: policy_3;
+		TRUE	: policy_1;
+	esac;
+    next(server) :=
+	case
+		TRUE	: {FALSE,TRUE};
+		TRUE	: server;
+	esac;
+--  
+-- 
+-- =====================================================================
+-- PolicyName (used in NuSMV) to ActualPolicy (used in Pyreric) Mapping
+-- =====================================================================
+-- ---------------------------------------------
+-- policy_1: (shown below)
+-- ---------------------------------------------
+-- sequential:
+--     parallel:
+--         sequential:
+--             match: ('srcip', 10.0.0.1) ('dstip', 10.0.0.100)
+--             modify: ('dstip', 10.0.0.4)
+--         sequential:
+--             match: ('srcip', 10.0.0.4) ('dstip', 10.0.0.1)
+--             modify: ('srcip', 10.0.0.100)
+--         sequential:
+--             negate:
+--                 match: ('srcip', 10.0.0.4) ('dstip', 10.0.0.1)
+--             negate:
+--                 match: ('srcip', 10.0.0.1) ('dstip', 10.0.0.100)
+--     parallel:
+--         sequential:
+--             match: ('srcip', 10.0.0.2) ('dstip', 10.0.0.100)
+--             modify: ('dstip', 10.0.0.4)
+--         sequential:
+--             match: ('srcip', 10.0.0.4) ('dstip', 10.0.0.2)
+--             modify: ('srcip', 10.0.0.100)
+--         sequential:
+--             negate:
+--                 match: ('srcip', 10.0.0.4) ('dstip', 10.0.0.2)
+--             negate:
+--                 match: ('srcip', 10.0.0.2) ('dstip', 10.0.0.100)
+--     if
+--         match: ('dstip', 10.0.0.4) ('ethtype', 2048)
+--     then
+--         modify: ('dstmac', 00:00:00:00:00:04)
+--     else
+--         identity
+-- ---------------------------------------------
+-- 
+-- ---------------------------------------------
+-- policy_2: (shown below)
+-- ---------------------------------------------
+-- sequential:
+--     parallel:
+--         sequential:
+--             match: ('srcip', 10.0.0.1) ('dstip', 10.0.0.100)
+--             modify: ('dstip', 10.0.0.3)
+--         sequential:
+--             match: ('srcip', 10.0.0.3) ('dstip', 10.0.0.1)
+--             modify: ('srcip', 10.0.0.100)
+--         sequential:
+--             negate:
+--                 match: ('srcip', 10.0.0.3) ('dstip', 10.0.0.1)
+--             negate:
+--                 match: ('srcip', 10.0.0.1) ('dstip', 10.0.0.100)
+--     parallel:
+--         sequential:
+--             match: ('srcip', 10.0.0.2) ('dstip', 10.0.0.100)
+--             modify: ('dstip', 10.0.0.3)
+--         sequential:
+--             match: ('srcip', 10.0.0.3) ('dstip', 10.0.0.2)
+--             modify: ('srcip', 10.0.0.100)
+--         sequential:
+--             negate:
+--                 match: ('srcip', 10.0.0.3) ('dstip', 10.0.0.2)
+--             negate:
+--                 match: ('srcip', 10.0.0.2) ('dstip', 10.0.0.100)
+--     if
+--         match: ('dstip', 10.0.0.3) ('ethtype', 2048)
+--     then
+--         modify: ('dstmac', 00:00:00:00:00:03)
+--     else
+--         identity
+-- ---------------------------------------------
+-- 
+-- ---------------------------------------------
+-- policy_3: (shown below)
+-- ---------------------------------------------
+-- sequential:
+--     parallel:
+--         sequential:
+--             match: ('srcip', 10.0.0.1) ('dstip', 10.0.0.100)
+--             modify: ('dstip', 10.0.0.5)
+--         sequential:
+--             match: ('srcip', 10.0.0.5) ('dstip', 10.0.0.1)
+--             modify: ('srcip', 10.0.0.100)
+--         sequential:
+--             negate:
+--                 match: ('srcip', 10.0.0.5) ('dstip', 10.0.0.1)
+--             negate:
+--                 match: ('srcip', 10.0.0.1) ('dstip', 10.0.0.100)
+--     parallel:
+--         sequential:
+--             match: ('srcip', 10.0.0.2) ('dstip', 10.0.0.100)
+--             modify: ('dstip', 10.0.0.5)
+--         sequential:
+--             match: ('srcip', 10.0.0.5) ('dstip', 10.0.0.2)
+--             modify: ('srcip', 10.0.0.100)
+--         sequential:
+--             negate:
+--                 match: ('srcip', 10.0.0.5) ('dstip', 10.0.0.2)
+--             negate:
+--                 match: ('srcip', 10.0.0.2) ('dstip', 10.0.0.100)
+--     if
+--         match: ('dstip', 10.0.0.5) ('ethtype', 2048)
+--     then
+--         modify: ('dstmac', 00:00:00:00:00:05)
+--     else
+--         identity
+-- ---------------------------------------------
+-- 
+-- 

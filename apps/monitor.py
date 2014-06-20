@@ -3,7 +3,7 @@ from pyretic.lib.std import *
 
 from pyretic.pyresonance.fsm_policy import *
 from pyretic.pyresonance.drivers.json_event import JSONEvent
-from pyretic.pyresonance.smv.translate import *
+from pyretic.pyresonance.smv.model_checker import *
 from pyretic.lib.query import *
 import shlex, subprocess
 
