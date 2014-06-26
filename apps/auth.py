@@ -68,7 +68,21 @@ def main():
     smv_str = fsm_def_to_smv_model(pol.fsm_def)
     mc = ModelChecker(smv_str,'auth')  
 
+
     ## Add specs 
+    mc.add_spec("FAIRNESS\n  authenticated;")
+
+    ### If authentication event is true, next policy state is 'allow'
+    mc.add_spec("SPEC AG (authenticated -> AX policy=policy_2)")
+
+    ### If authentication event is false, next policy state is 'drop'
+    mc.add_spec("SPEC AG (!authenticated -> AX policy=policy_1)")
+
+    ### It is always possible for the policy state to go to 'allow'
+    mc.add_spec("SPEC AG (EF policy=policy_2)")
+
+    ### Policy state is 'drop' until authentication is true. 
+    mc.add_spec("SPEC A [ policy=policy_1 U authenticated ]")
 
     mc.save_as_smv_file()
     mc.verify()

@@ -70,11 +70,16 @@ def main():
     mc = ModelChecker(smv_str,'ids')  
 
     ## Add specs
-    mc.add_spec("SPEC AG infected -> policy=policy_1")
-    mc.add_spec("SPEC AG !infected -> policy=policy_2")
-    mc.add_spec("SPEC AG EF policy=policy_2")
-    mc.add_spec("SPEC AG EF policy=policy_1")
-    mc.add_spec("SPEC EF A [ policy=policy_2 U infected ]")
+    mc.add_spec("FAIRNESS\n  infected;")
+
+    ### If infected event is true, next policy state is 'drop'
+    mc.add_spec("SPEC AG (infected -> AX policy=policy_1)")
+
+    ### If infected event is false, next policy state is 'allow'
+    mc.add_spec("SPEC AG (!infected -> AX policy=policy_2)")
+
+    ### Policy state is 'allow' until infected is true.
+    mc.add_spec("SPEC A [ policy=policy_2 U infected ]")
 
     mc.save_as_smv_file()
 
