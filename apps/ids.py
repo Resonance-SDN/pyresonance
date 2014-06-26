@@ -24,26 +24,36 @@ from pyretic.pyresonance.smv.model_checker import *
 #   - python json_sender.py -n infected -l False --flow="{srcip=10.0.0.1}" -a 127.0.0.1 -p 50001
 #####################################################################################################
 
+### Define a class for the application, subclassed from DynamicPolicy
 class ids(DynamicPolicy):
     def __init__(self):
 
-       ### DEFINE THE LPEC FUNCTION
+        ### 1. DEFINE THE LPEC FUNCTION
 
         def lpec(f):
+            # Packets with same source IP 
+            #  will have a same "state" (thus, same policy applied).
             return match(srcip=f['srcip'])
 
-        ## SET UP TRANSITION FUNCTIONS
+
+        ### 2. SET UP TRANSITION FUNCTIONS
 
         @transition
         def infected(self):
+            # Return the variable's own value. 
+            # If True, return True. If False, return False.
             self.case(occured(self.event),self.event)
 
         @transition
         def policy(self):
+            # If "infected" is True, change policy to "drop"
             self.case(is_true(V('infected')),C(drop))
+
+            # Default policy is "indentity", which is "allow".
             self.default(C(identity))
 
-        ### SET UP THE FSM DESCRIPTION
+
+        ### 3. SET UP THE FSM DESCRIPTION
 
         self.fsm_def = FSMDef(
             infected=FSMVar(type=BoolType(), 
@@ -53,16 +63,22 @@ class ids(DynamicPolicy):
                           init=identity,
                           trans=policy))
 
-        ### SET UP POLICY AND EVENT STREAMS
 
+        ### 4. SET UP POLICY AND EVENT STREAMS
+
+        ### This part pretty much remains same for any application
         fsm_pol = FSMPolicy(lpec,self.fsm_def)
         json_event = JSONEvent()
         json_event.register_callback(fsm_pol.event_handler)
+        ### This part pretty much remains same for any application
 
+        # Specify application class name here. (e.g., "ids")
         super(ids,self).__init__(fsm_pol)
 
 
 def main():
+
+    # DynamicPolicy that is going to be returned
     pol = ids()
 
     # For NuSMV
@@ -81,8 +97,10 @@ def main():
     ### Policy state is 'allow' until infected is true.
     mc.add_spec("SPEC A [ policy=policy_2 U infected ]")
 
+    # Save NuSMV file
     mc.save_as_smv_file()
 
+    # This is for measuring how long it takes for verifying properties
     import datetime as dt
     n1=dt.datetime.now()
     mc.verify()
@@ -90,4 +108,6 @@ def main():
 
     print (n2-n1).microseconds
 
+    # Return DynamicPolicy. 
+    # flood() will take for of forwarding for this simple example.
     return pol >> flood()
