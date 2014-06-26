@@ -33,8 +33,8 @@ MODULE main
 -- ---------------------------------------------
 -- 
 -- 
-SPEC AG infected -> policy=policy_1
-SPEC AG !infected -> policy=policy_2
-SPEC AG EF policy=policy_2
-SPEC AG EF policy=policy_1
-SPEC EF A [ policy=policy_2 U infected ]
+FAIRNESS
+  infected;
+SPEC AG (infected -> AX policy=policy_1)
+SPEC AG (!infected -> AX policy=policy_2)
+SPEC A [ policy=policy_2 U infected ]
