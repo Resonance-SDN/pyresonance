@@ -4,7 +4,7 @@ UPDATE (as of April 23rd, 2015)
 We have a newer version of PyResonance, now called Kinetic. Kinetic is based on Pyretic, and we have made significant changes and improvements to the code base. We will discontinue support for PyResonance; further development and support will happen in the Kinetic repository. 
 
 More information can be found here:
-https://www.kinetic.noise.gatech.edu
+http://kinetic.noise.gatech.edu
 
 
 Resonance
